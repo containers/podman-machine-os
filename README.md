@@ -1,2 +1,3 @@
 # podman-machine-os
-machine image files
+
+This repo is for building the disk images for podman machine.
