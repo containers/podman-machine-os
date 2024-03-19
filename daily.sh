@@ -1,9 +1,9 @@
 #!/bin/bash
 
-REPO="quay.io/baude"
-IMAGE_NAME="stage-podman-machine:latest"
+REPO="quay.io/podman"
+IMAGE_NAME="stage-machine-os:latest"
 OUTDIR="daily_out"
-BUILD_SCRIPT="/home/baude/go/src/github.com/containers/build-podman-machine-os-disks/build-podman-machine-os-disks.sh"
+BUILD_SCRIPT="./build-podman-machine-os-disks/build-podman-machine-os-disks.sh"
 OCI_NAME="podman-machine-daily"
 
 mkdir $OUTDIR
