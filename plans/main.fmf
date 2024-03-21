@@ -1,0 +1,10 @@
+prepare:
+    - how: install
+      package:
+        - podman
+
+/build_container_test:
+    summary: Build Container
+    execute:
+        how: tmt
+        script: bash ./plans/build_container_test.sh
