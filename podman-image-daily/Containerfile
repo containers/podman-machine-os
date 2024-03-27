@@ -24,8 +24,12 @@ COPY  10-autologin.conf /etc/systemd/system/getty@.service.d/10-autologin.conf
 ## by default
 COPY delegate.conf /etc/systemd/system/user@.service.d/delegate.conf
 
-COPY rhcontainerbot-podman-next-fedora.repo /etc/yum.repos.d/
-COPY rhcontainerbot-podman-next-fedora.gpg /etc/pki/rpm-gpg/
+# Setup the podman-next copr repo
+# The source file for the dnf repo may say `rawhide` but it's release
+# agnostic and `rawhide` in the name is unlikely to change compared
+# with URLs containing fedora release numbers.
+ADD https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman-next/repo/fedora-rawhide/rhcontainerbot-podman-next-fedora-rawhide.repos /etc/yum.repos.d/rhcontainerbot-podman-next-fedora.repo
+ADD https://download.copr.fedorainfracloud.org/results/rhcontainerbot/podman-next/pubkey.gpg /etc/pki/rpm-gpg/rhcontainerbot-podman-next-fedora.gpg
 
 # Replace aardvark-dns, conmon, crun, netavark, podman, containers-common
 # Remove moby-engine, containerd, runc, zincati ?
