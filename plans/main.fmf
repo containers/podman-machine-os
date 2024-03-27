@@ -1,10 +1,22 @@
 prepare:
     - how: install
       package:
+        - buildah
+        - e2fsprogs
+        - git-core
+        - jq
+        - make
+        - osbuild
+        - osbuild-ostree
+        - osbuild-tools
         - podman
+        - xfsprogs
 
-/build_container_test:
-    summary: Build Container
-    execute:
-        how: tmt
-        script: bash ./plans/build_container_test.sh
+discover:
+    how: shell
+    tests:
+    - name: build_machine_os_test
+      test: make
+
+execute:
+    how: tmt
