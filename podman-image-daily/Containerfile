@@ -49,3 +49,8 @@ COPY  core /var/lib/systemd/linger/core
 RUN systemctl disable coreos-platform-chrony-config.service && \
     # Append the chrony conf dir location to the default config
     echo "confdir /etc/chrony.d" >> /etc/chrony.conf
+
+# For Rosetta
+COPY rosetta-activation.service /etc/systemd/system/rosetta-activation.service
+COPY unregister-handler.service /etc/systemd/system/unregister-handler.service
+COPY rosetta-activation.sh /usr/local/bin/rosetta-activation.sh

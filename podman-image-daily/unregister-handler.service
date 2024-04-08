@@ -1,0 +1,12 @@
+[Unit]
+Description=Unregister x86_64 handler if necessary
+After=rosetta-activation.service
+ConditionPathExists=/mnt/rosetta
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c "echo -1 > /proc/sys/fs/binfmt_misc/qemu-x86_64"
+
+[Install]
+WantedBy=multi-user.target
