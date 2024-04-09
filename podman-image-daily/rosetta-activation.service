@@ -1,0 +1,12 @@
+[Unit]
+Description=Activates Rosetta if necessary
+After=systemd-binfmt.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sh -c "mount -t virtiofs -o context=system_u:object_r:nfs_t:s0 rosetta /mnt || true"
+ExecStart=/bin/sh -c "/usr/local/bin/rosetta-activation.sh || true"
+
+[Install]
+WantedBy=multi-user.target
