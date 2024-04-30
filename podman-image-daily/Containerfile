@@ -51,6 +51,9 @@ RUN systemctl disable coreos-platform-chrony-config.service && \
     echo "confdir /etc/chrony.d" >> /etc/chrony.conf
 
 # For Rosetta
+# We should enable the service but for some reason the chnage is not
+# carried into the VM even if we do so here, so for now this must be
+# enabled via ignition by podman machine code:
+# https://github.com/containers/podman/pull/21670#discussion_r1585790802
 COPY rosetta-activation.service /etc/systemd/system/rosetta-activation.service
-COPY unregister-handler.service /etc/systemd/system/unregister-handler.service
 COPY rosetta-activation.sh /usr/local/bin/rosetta-activation.sh
