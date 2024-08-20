@@ -1,4 +1,4 @@
-package verify_test
+package verify
 
 import (
 	"fmt"
@@ -31,6 +31,7 @@ func init() {
 	if err != nil {
 		Fail(fmt.Sprintf("Failed to find podman binary: %v", err))
 	}
+	fmt.Printf("Using podman binary: %s\n", podmanBinary)
 	if value, ok := os.LookupEnv("TMPDIR"); !ok {
 		tmpDir = value
 	}
