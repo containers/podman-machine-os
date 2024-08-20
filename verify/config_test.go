@@ -1,4 +1,4 @@
-package verify_test
+package verify
 
 import (
 	"encoding/json"
@@ -21,7 +21,9 @@ import (
 var originalHomeDir = os.Getenv("HOME")
 
 const (
-	defaultTimeout = 10 * time.Minute
+	defaultTimeout         = 10 * time.Minute
+	podmanBinaryName       = "podman"
+	podmanRemoteBinaryName = "podman-remote"
 )
 
 type ImageTestBuilder interface {
@@ -29,6 +31,7 @@ type ImageTestBuilder interface {
 	setCmd(mc []string) *ImageTestBuilder
 	setTimeout(duration time.Duration) *ImageTestBuilder
 	run() (*machineSession, error)
+	withDiskSize() (*machineSession, error)
 }
 type machineSession struct {
 	*Session
@@ -40,6 +43,7 @@ type imageTestBuilder struct {
 	name      string
 	timeout   time.Duration
 	session   *machineSession
+	diskSize  uint
 }
 
 // waitWithTimeout waits for a command to complete for a given
@@ -119,6 +123,11 @@ func (m *imageTestBuilder) setCmd(c []string) *imageTestBuilder {
 	return m
 }
 
+func (m *imageTestBuilder) withDiskSize(s uint) *imageTestBuilder {
+	m.diskSize = s
+	return m
+}
+
 func (m *imageTestBuilder) setTimeout(timeout time.Duration) *imageTestBuilder { //nolint: unparam
 	m.timeout = timeout
 	return m
@@ -134,7 +143,11 @@ func (m *imageTestBuilder) run() (*machineSession, error) {
 
 func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
 	machineName := randomString()
-	cmdLine := []string{"machine", "init", "--now", "--image", m.imagePath, machineName}
+	diskSize := defaultDiskSize
+	if m.diskSize > 0 {
+		diskSize = m.diskSize
+	}
+	cmdLine := []string{"machine", "init", "--now", "--image", m.imagePath, "--disk-size", strconv.Itoa(int(diskSize)), machineName}
 	session, err := mb.setName(machineName).setCmd(cmdLine).run()
 	return machineName, session, err
 
@@ -238,5 +251,6 @@ func runSystemCommand(binary string, cmdArgs []string, timeout time.Duration, wa
 // Note: this will need to be moved Linux and everything else
 // to distinguish between podman and podman-remote
 func getPodmanBinary() (string, error) {
-	return exec.LookPath("podman-remote")
+	podmanBinary := getPodmanBinaryName()
+	return exec.LookPath(podmanBinary)
 }

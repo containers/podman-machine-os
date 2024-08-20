@@ -1,4 +1,4 @@
-package verify_test
+package verify
 
 import (
 	. "github.com/onsi/ginkgo/v2"
