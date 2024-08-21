@@ -15,4 +15,4 @@ if [[ ! ${MACHINE_PATH} ]]; then
 echo "using images from ${MACHINE_PATH}"
 export MACHINE_IMAGE_PATH=$MACHINE_PATH
 
-ginkgo
+ginkgo -v

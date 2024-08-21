@@ -29,17 +29,27 @@ You can also set the path to the disk image with an environment variable such as
 
 `$ PODMAN_MACHINE_IMAGE=/path/to/disk/image sh run_test.sh`
 
+#### MacOS
 On MacOS, **you will need to set the TMPDIR environment variable** to avoid a
 limitation in MacOS where socket lengths cannot exceed 120-some characters.
 For example:
 
 `$ TMPDIR=/Users/brentbaude/ sh run_test.sh /path/to/disk/image`
 
-### Operating Systems with multiple machine providers
-
-Both Windows and MacOS support multiple machine providers. Windows supports
-`WSL` and `HyperV`, where WSL is the default provider.  On MacOS, `applehv` and `libkrun`
-are both supported and `applehv` is the default. You can also the provider used by
-the tests with an environment variable, such as the following on MacOS:
+For MacOs, we support both `applehv` and `libkrun` machine providers.  The `applehv` provider is the default.
+To switch providers in MacOS, you can either set it in a `containers.conf` in `~/.config/containers/`. You can
+also specify the provider through an environment variable like so:
 
 `$ TMPDIR=/Users/brentbaude CONTAINERS_MACHINE_PROVIDER=libkrun sh run_test.sh /path/to/disk/image`
+
+#### Windows HyperV
+
+Remember that HyperV in Podman machine requires Administrator authority so be certain to open an
+administrator powershell.  Then make sure you set the HyperV provider. The simplest approach is using an
+environment variable.
+
+`> $Env:CONTAINERS_MACHINE_PROVIDER="hyperv"`
+
+To run the suite, use the Powershell script.
+
+`> .\win_run_test.ps1 c:\Path\To\Disk\Image`
