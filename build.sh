@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -exo pipefail
+
 source ./util.sh
 
 

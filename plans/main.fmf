@@ -1,10 +1,29 @@
 prepare:
     - how: install
       package:
+        - golang
+        - osbuild
+        - osbuild-ostree
+        - osbuild-tools
         - podman
+        - podman-machine
+        - podman-remote
+        - gvisor-tap-vsock
+        - zstd
 
-/build_container_test:
-    summary: Build Container
+/build_and_verify:
+    summary: Build and Verify
+    provision:
+        how: artemis
+        hardware:
+            virtualization:
+                is-virtualized: false
     execute:
         how: tmt
-        script: bash ./plans/build_container_test.sh
+        script: |
+            setenforce 0
+            OCI_VERSION="5.3"  DISK_IMAGE_NAME="podman-machine" OCI_NAME="machine-osstage-5.3" sh build.sh
+            chown -R fedora:fedora ./*
+            cd verify
+            runuser fedora -c 'go install github.com/onsi/ginkgo/v2/ginkgo'
+            runuser fedora -c 'TMPDIR=/var/tmp MACHINE_IMAGE_PATH="../outdir/podman-machine.x86_64.qemu.qcow2.zst" PATH=$PATH:~/go/bin sh run_test.sh'
