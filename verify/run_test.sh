@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -exo pipefail
 
 MACHINE_PATH=${MACHINE_IMAGE_PATH}
 

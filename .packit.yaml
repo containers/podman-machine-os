@@ -9,8 +9,8 @@ jobs:
     skip_build: true
     notifications:
       failure_comment:
-        message: "container build test failed. @containers/packit-build please check."
+        message: "Tests failed. @containers/packit-build please check."
     targets:
-      - fedora-rawhide
-    identifier: build_container_test
-    tmt_plan: "/plans/build_container_test"
+      - fedora-latest-stable
+    identifier: build_and_verify
+    tmt_plan: "/plans/build_and_verify"
