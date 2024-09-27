@@ -44,7 +44,7 @@ DISK_FLAVORS_W_SUFFIX=("applehv.raw" "hyperv.vhdx" "qemu.qcow2")
 
 REPO="${REPO:-quay.io/podman}"
 DISK_IMAGE_NAME="${DISK_IMAGE_NAME:-stage-machine-os}"
-OUTDIR="outdir"
+OUTDIR="${TMT_TEST_DATA:-outdir}"
 BUILD_SCRIPT="./build-podman-machine-os-disks/build-podman-machine-os-disks.sh"
 OCI_NAME="${OCI_NAME:-podman-machine-daily}"
 OCI_VERSION="${OCI_VERSION:-unknown}"

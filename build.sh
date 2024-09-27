@@ -7,7 +7,7 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-mkdir $OUTDIR
+mkdir -p $OUTDIR
 git clone https://github.com/dustymabe/build-podman-machine-os-disks
 
 echo " Building image locally"
@@ -19,7 +19,8 @@ echo "Saving image from image store to filesystem"
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-cd $OUTDIR && sudo sh  ../build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
+SRCDIR="${TMT_TREE:-..}"
+cd $OUTDIR && sudo sh $SRCDIR/build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
 
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
