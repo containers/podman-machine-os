@@ -3,19 +3,21 @@
 set -exo pipefail
 
 source ./util.sh
-
+source ./podman-rpm-info-vars.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-mkdir -p $OUTDIR
-git clone https://github.com/dustymabe/build-podman-machine-os-disks
+if [[ ! -d "build-podman-machine-os-disks" ]]; then
+    git clone https://github.com/dustymabe/build-podman-machine-os-disks
+fi
 
 echo " Building image locally"
 
-podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image-daily/Containerfile ${PWD}/podman-image-daily
+podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image-daily/Containerfile ${PWD}/podman-image-daily --build-arg PODMAN_VERSION=${PODMAN_VERSION} --build-arg PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE} --build-arg FEDORA_RELEASE=${FEDORA_RELEASE} --build-arg ARCH=${ARCH}
 
 echo "Saving image from image store to filesystem"
 
+mkdir -p $OUTDIR
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"

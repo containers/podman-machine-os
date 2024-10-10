@@ -1,11 +1,16 @@
 FROM quay.io/fedora/fedora-coreos:testing
 
+ARG PODMAN_VERSION=${PODMAN_VERSION}
+ARG PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE}
+ARG FEDORA_RELEASE=${FEDORA_RELEASE}
+ARG ARCH=${ARCH}
+ARG PODMAN_RPM_URL="https://kojipkgs.fedoraproject.org/packages/podman/${PODMAN_VERSION}/${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}/${ARCH}/podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}.rpm"
+
 # Make required directories
 RUN mkdir -p /etc/containers/registries.conf.d && \
     mkdir -p /etc/systemd/system.conf.d && \
     mkdir -p /etc/environment.d && \
     mkdir -p /etc/containers/registries.conf.d
-
 
 COPY  50-podman-makestep.conf /etc/chrony.d/50-podman-makestep.conf
 COPY  docker-host.sh /etc/profile.d/docker-host.sh
@@ -18,34 +23,18 @@ COPY  10-inotify-instances.conf /etc/sysctl.d/10-inotify-instances.conf
 COPY  10-autologin.conf /etc/systemd/system/serial-getty@.service.d/10-autologin.conf
 COPY  10-autologin.conf /etc/systemd/system/getty@.service.d/10-autologin.conf
 
-
-
 ## Set delegate.conf so cpu,io subsystem is delegated to non-root users as well for cgroupv2
 ## by default
 COPY delegate.conf /etc/systemd/system/user@.service.d/delegate.conf
-
-# Setup the podman-next copr repo
-# The source file for the dnf repo may say `rawhide` but it's release
-# agnostic and `rawhide` in the name is unlikely to change compared
-# with URLs containing fedora release numbers.
-ADD https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman-next/repo/fedora-rawhide/rhcontainerbot-podman-next-fedora-rawhide.repos /etc/yum.repos.d/rhcontainerbot-podman-next-fedora.repo
-ADD https://download.copr.fedorainfracloud.org/results/rhcontainerbot/podman-next/pubkey.gpg /etc/pki/rpm-gpg/rhcontainerbot-podman-next-fedora.gpg
-
-# Replace aardvark-dns, conmon, crun, netavark, podman, containers-common
-# Remove moby-engine, containerd, runc, zincati ?
-# Note: Currently does not result in a size reduction for the container image
-
-RUN rpm-ostree override replace --experimental --freeze \
-    --from repo="copr:copr.fedorainfracloud.org:rhcontainerbot:podman-next" \
-    aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm && \
-    rpm-ostree override remove moby-engine containerd runc && \
-    rm -fr /var/cache && \
-    ostree container commit
 
 # Install subscription-manager and enable service to refresh certificates
 # Install qemu-user-static for bootc
 # Install gvisor-tap-vsock-gvforwarder for hyperv
 RUN rpm-ostree install subscription-manager gvisor-tap-vsock-gvforwarder qemu-user-static && rm -fr /var/cache
+RUN if [[ $(rpm -q podman) != "podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}" ]]; \
+        then rpm-ostree override replace ${PODMAN_RPM_URL} && \
+        rm -rf /var/cache && ostree container commit; fi
+
 RUN systemctl enable rhsmcertd.service
 # Patching qemu backed binfmt configurations to use the actual executable's permissions and not the interpreter's
 RUN for x in /usr/lib/binfmt.d/*.conf; do sed 's/\(:[^C:]*\)$/\1C/' "$x" | tee /etc/binfmt.d/"$(basename "$x")"; done
