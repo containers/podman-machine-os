@@ -46,6 +46,16 @@ RUN systemctl disable coreos-platform-chrony-config.service && \
     # Append the chrony conf dir location to the default config
     echo "confdir /etc/chrony.d" >> /etc/chrony.conf
 
+# Disable the systemd resolver, the unit cannot be disabled/ or masked
+# https://fedoraproject.org/wiki/Changes/systemd-resolved#Fully_opting_out_of_systemd-resolved_use
+# https://github.com/containers/podman-machine-os/issues/18
+# We have to remove /etc/resolv.conf because that is a symlink to the systemd resolv dir which
+# means NetworkManager will not populate it otherwise. To do that we use --network=none so podman
+# does not mount over it and we can remove and create a real inode on the rootfs.
+RUN --network=none mkdir -p /etc/systemd/system-preset && \
+    echo "disable systemd-resolved.service" >/etc/systemd/system-preset/20-systemd-resolved-disable.preset && \
+    rm -f /etc/resolv.conf && touch /etc/resolv.conf
+
 # For Rosetta
 # We should enable the service but for some reason the chnage is not
 # carried into the VM even if we do so here, so for now this must be
