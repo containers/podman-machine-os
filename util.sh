@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./podman-rpm-info-vars.sh
+
 CPU_ARCH=`lscpu --json | jq .lscpu.[0].data | tr -d '"'`
 ARCHES=("x86_64" "aarch64")
 IMAGE_ARCHES=("amd64" "arm64")
@@ -43,10 +45,15 @@ DISK_FLAVORS=("applehv" "hyperv" "qemu")
 DISK_FLAVORS_W_SUFFIX=("applehv.raw" "hyperv.vhdx" "qemu.qcow2")
 
 REPO="${REPO:-quay.io/podman}"
-DISK_IMAGE_NAME="${DISK_IMAGE_NAME:-stage-machine-os}"
 OUTDIR="${TMT_TEST_DATA:-outdir}"
 BUILD_SCRIPT="./build-podman-machine-os-disks/build-podman-machine-os-disks.sh"
-OCI_NAME="${OCI_NAME:-podman-machine-daily}"
+if [[ ${PODMAN_RPM_TYPE} != "dev" ]]; then
+    OCI_NAME="machine-os-$PODMAN_VERSION"
+    DISK_IMAGE_NAME="$OCI_NAME-$PODMAN_RPM_RELEASE"
+else
+    OCI_NAME="${OCI_NAME:-podman-machine-daily}"
+    DISK_IMAGE_NAME="${DISK_IMAGE_NAME:-stage-machine-os}"
+fi
 OCI_VERSION="${OCI_VERSION:-unknown}"
 FULL_IMAGE_NAME="${REPO}/${OCI_NAME}:${OCI_VERSION}"
 
