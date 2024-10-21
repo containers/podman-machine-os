@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
-export ARCH=$(uname -m)
+# Set PODMAN_RPM_TYPE to anything other than "dev" to build release rpms.
+export PODMAN_RPM_TYPE="release"
+
+# If PODMAN_RPM_TYPE is "dev", the vars below don't end up getting used in the
+# build
 export PODMAN_VERSION="5.2.5"
 export PODMAN_RPM_RELEASE="1"
 export FEDORA_RELEASE="40"
+export ARCH=$(uname -m)

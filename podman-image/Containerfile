@@ -1,5 +1,6 @@
 FROM quay.io/fedora/fedora-coreos:testing
 
+ARG PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE}
 ARG PODMAN_VERSION=${PODMAN_VERSION}
 ARG PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE}
 ARG FEDORA_RELEASE=${FEDORA_RELEASE}
@@ -27,13 +28,35 @@ COPY  10-autologin.conf /etc/systemd/system/getty@.service.d/10-autologin.conf
 ## by default
 COPY delegate.conf /etc/systemd/system/user@.service.d/delegate.conf
 
+# Setup the podman-next copr repo
+# The source file for the dnf repo may say `rawhide` but it's release
+# agnostic and `rawhide` in the name is unlikely to change compared
+# with URLs containing fedora release numbers.
+ADD https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman-next/repo/fedora-rawhide/rhcontainerbot-podman-next-fedora-rawhide.repos /etc/yum.repos.d/rhcontainerbot-podman-next-fedora.repo
+ADD https://download.copr.fedorainfracloud.org/results/rhcontainerbot/podman-next/pubkey.gpg /etc/pki/rpm-gpg/rhcontainerbot-podman-next-fedora.gpg
+
+# 1. For dev builds, replace aardvark-dns, conmon, crun, netavark, podman, containers-common
+# 2. For release builds, fetch the build from koji
+# 3. Remove moby-engine, containerd, runc, zincati for both dev and release builds
+# Note: Currently does not result in a size reduction for the container image
+
+RUN if [[ ${PODMAN_RPM_TYPE} == "dev" ]]; then \
+        rpm-ostree override replace --experimental --freeze \
+        --from repo="copr:copr.fedorainfracloud.org:rhcontainerbot:podman-next" \
+        aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm; \
+    else \
+        rm /etc/yum.repos.d/rhcontainerbot*.repo /etc/pki/rpm-gpg/rhcontainerbot*.gpg; \
+        if [[ $(rpm -q podman) != "podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}" ]]; then \
+            rpm-ostree override replace ${PODMAN_RPM_URL}; \
+        fi; \
+    fi; \
+    rpm-ostree override remove moby-engine containerd runc; \
+    rm -fr /var/cache && ostree container commit
+
 # Install subscription-manager and enable service to refresh certificates
 # Install qemu-user-static for bootc
 # Install gvisor-tap-vsock-gvforwarder for hyperv
 RUN rpm-ostree install subscription-manager gvisor-tap-vsock-gvforwarder qemu-user-static && rm -fr /var/cache
-RUN if [[ $(rpm -q podman) != "podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}" ]]; \
-        then rpm-ostree override replace ${PODMAN_RPM_URL} && \
-        rm -rf /var/cache && ostree container commit; fi
 
 RUN systemctl enable rhsmcertd.service
 # Patching qemu backed binfmt configurations to use the actual executable's permissions and not the interpreter's
