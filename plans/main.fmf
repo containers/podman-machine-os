@@ -20,14 +20,4 @@ prepare:
                 is-virtualized: false
     execute:
         how: tmt
-        script: |
-            setenforce 0
-            export BASENAME="machine-os"
-            export ARCH=$(uname -m)
-            export PODMAN_VERSION="5.3"
-            OCI_VERSION="$PODMAN_VERSION"  DISK_IMAGE_NAME="$BASENAME-$PODMAN_VERSION" OCI_NAME="machine-osstage-$PODMAN_VERSION" sh build.sh
-            tar cvf $TMT_TEST_DATA/$BASENAME-$PODMAN_VERSION-$ARCH.tar $TMT_TEST_DATA/$BASENAME-$PODMAN_VERSION
-            chown -R fedora:fedora ./*
-            cd verify
-            runuser fedora -c 'go install github.com/onsi/ginkgo/v2/ginkgo'
-            runuser fedora -c 'TMPDIR=/var/tmp MACHINE_IMAGE_PATH="$TMT_TEST_DATA/$BASENAME-$PODMAN_VERSION.$ARCH.qemu.qcow2.zst" PATH=$PATH:~/go/bin sh run_test.sh'
+        script: bash tmt-test.sh
