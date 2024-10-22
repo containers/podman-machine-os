@@ -23,11 +23,11 @@ prepare:
         script: |
             setenforce 0
             source ./podman-rpm-info-vars.sh
+            export PODMAN_VERSION_SHORT=$(echo "${PODMAN_VERSION%.*}")
             export BASENAME="machine-os"
-            export OCI_NAME=$BASENAME-$PODMAN_VERSION
-            export DISK_IMAGE_NAME=$OCI_NAME-$PODMAN_RPM_RELEASE
+            export OCI_NAME=$BASENAME-$PODMAN_VERSION_SHORT
+            export DISK_IMAGE_NAME=$OCI_NAME
             sh build.sh
-            tar cvf $TMT_TEST_DATA/$DISK_IMAGE_NAME-$ARCH.tar $TMT_TEST_DATA/$DISK_IMAGE_NAME
             chown -R fedora:fedora ./*
             cd verify
             runuser fedora -c 'go install github.com/onsi/ginkgo/v2/ginkgo'
