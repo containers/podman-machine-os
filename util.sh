@@ -50,8 +50,8 @@ REPO="${REPO:-quay.io/podman}"
 export OUTDIR="${TMT_TEST_DATA:-$(git rev-parse --show-toplevel)/outdir}"
 BUILD_SCRIPT="./build-podman-machine-os-disks/build-podman-machine-os-disks.sh"
 if [[ ${PODMAN_RPM_TYPE} != "dev" ]]; then
-    export OCI_NAME="machine-os-$PODMAN_VERSION"
-    export DISK_IMAGE_NAME="$OCI_NAME-$PODMAN_RPM_RELEASE"
+    export OCI_NAME="podman-machine"
+    export DISK_IMAGE_NAME="$OCI_NAME"
 else
     export OCI_NAME="${OCI_NAME:-podman-machine-daily}"
     export DISK_IMAGE_NAME="${DISK_IMAGE_NAME:-stage-machine-os}"

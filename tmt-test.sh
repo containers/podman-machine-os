@@ -6,8 +6,6 @@ setenforce 0
 
 . build.sh
 
-tar cvf $OUTDIR/$DISK_IMAGE_NAME.tar $OUTDIR/$DISK_IMAGE_NAME
-
 chown -R fedora:fedora ./*
 
 pushd verify

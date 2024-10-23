@@ -34,7 +34,7 @@ pushd $OUTDIR && sudo sh $SRCDIR/build-podman-machine-os-disks/build-podman-mach
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
 for DISK in "${DISK_FLAVORS_W_SUFFIX[@]}"; do
-  zstd -T0 -14 "${DISK_IMAGE_NAME}.${CPU_ARCH}.${DISK}"
+  zstd --rm -T0 -14 "${DISK_IMAGE_NAME}.${CPU_ARCH}.${DISK}"
 done
 
 popd
