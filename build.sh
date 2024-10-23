@@ -28,7 +28,6 @@ mkdir -p $OUTDIR
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-SRCDIR="${TMT_TREE:-..}"
 pushd $OUTDIR && sudo sh $SRCDIR/build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
 
 echo "Compressing disk images with zstd"
