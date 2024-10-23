@@ -24,7 +24,7 @@ prepare:
             setenforce 0
             source ./podman-rpm-info-vars.sh
             export PODMAN_VERSION_SHORT=$(echo "${PODMAN_VERSION%.*}")
-            export BASENAME="machine-os"
+            export BASENAME="podman-machine"
             export OCI_NAME=$BASENAME-$PODMAN_VERSION_SHORT
             export DISK_IMAGE_NAME=$OCI_NAME
             sh build.sh
