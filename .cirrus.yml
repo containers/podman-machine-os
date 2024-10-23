@@ -1,0 +1,67 @@
+---
+
+# Main collection of env. vars to set for all tasks and scripts.
+env:
+    ####
+    #### Cache-image names to test with (double-quotes around names are critical)
+    ####
+    FEDORA_NAME: "fedora-40"
+    FEDORA_AARCH64_NAME: "${FEDORA_NAME}-aarch64"
+
+    # Image identifiers
+    IMAGE_SUFFIX: "c20241016t144444z-f40f39d13"
+
+    # EC2 images
+    FEDORA_AMI: "fedora-aws-${IMAGE_SUFFIX}"
+    FEDORA_AARCH64_AMI: "fedora-podman-aws-arm64-${IMAGE_SUFFIX}"
+
+    # Container
+    FEDORA_CONTAINER_FQIN: "quay.io/libpod/fedora_podman:${IMAGE_SUFFIX}"
+
+    # directory where the images will be placed
+    OUTDIR: "outdir"
+
+    GOPATH: "/var/tmp/go"
+    GOCACHE: "${GOPATH}/cache"
+    HOME: /root
+    CIRRUS_WORKING_DIR: /var/tmp/podman-machine-os
+
+aws_credentials: ENCRYPTED[b01991b35fe3f81eed974cf47b5541ed518eacfee4e430e9fb50fba31090f557ea86b0b79b5f5b4a712218206e0f3f58]
+
+
+image_build_task:
+    name: "Image Build ${ARCH}"
+    alias: "image_build"
+    ec2_instance:
+        image: "${VM_IMAGE}"
+        type: "${EC2_INST_TYPE}"
+        region: us-east-1
+    matrix:
+        - env:
+            ARCH: "x86_64"
+            VM_IMAGE: "${FEDORA_AMI}"
+            EC2_INST_TYPE: "m5zn.metal"  # Bare-metal instance is required
+        - env:
+            ARCH: "aarch64"
+            VM_IMAGE: "${FEDORA_AARCH64_AMI}"
+            EC2_INST_TYPE: "c6g.metal"  # Bare-metal instance is required
+
+    setup_script: ./contrib/cirrus/setup.sh
+    build_script: ./build.sh
+    verify_script: ./contrib/cirrus/verify.sh
+    image_prep_script: "mv $OUTDIR/*.zst ."
+    image_artifacts: &image_artifacts
+        path: "*.zst"
+        type: application/octet-stream
+
+
+test_task:
+    name: "Total Success"
+    alias: success
+    depends_on:
+        - image_build
+    container:
+        image: "${FEDORA_CONTAINER_FQIN}"
+        cpu: 1
+        memory: 1
+    noop_script: true
