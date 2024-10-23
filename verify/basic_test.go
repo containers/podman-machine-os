@@ -78,4 +78,15 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(removeMachineSession).To(Exit(0))
 	})
+
+	It("image checks", func() {
+		machineName, session, err := mb.initNowWithName()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(session).To(Exit(0))
+
+		sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "systemctl", "is-active", "systemd-resolved.service"}).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(sshSession).To(Exit(3))
+		Expect(sshSession.outputToString()).To(Equal("inactive"))
+	})
 })
