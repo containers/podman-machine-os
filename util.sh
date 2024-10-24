@@ -47,7 +47,8 @@ DISK_FLAVORS_W_SUFFIX=("applehv.raw" "hyperv.vhdx" "qemu.qcow2")
 REPO="${REPO:-quay.io/podman}"
 # OUTDIR needs to be run in TMT test as a non-root user after initial root
 # login
-export OUTDIR="${TMT_TEST_DATA:-$(git rev-parse --show-toplevel)/outdir}"
+export SRCDIR="${TMT_TREE:-${CIRRUS_WORKING_DIR:-..}}"
+export OUTDIR="${OUTDIR:-${TMT_TEST_DATA:-$(git rev-parse --show-toplevel)/outdir}}"
 BUILD_SCRIPT="./build-podman-machine-os-disks/build-podman-machine-os-disks.sh"
 if [[ ${PODMAN_RPM_TYPE} != "dev" ]]; then
     export OCI_NAME="machine-os-$PODMAN_VERSION"
