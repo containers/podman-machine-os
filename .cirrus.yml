@@ -22,7 +22,6 @@ env:
     # directory where the images will be placed
     OUTDIR: "outdir"
 
-    HOME: /root
     CIRRUS_WORKING_DIR: /var/tmp/podman-machine-os
 
     # Vars used for the macos and windows testing
@@ -41,6 +40,8 @@ image_build_task:
         image: "${VM_IMAGE}"
         type: "${EC2_INST_TYPE}"
         region: us-east-1
+    env:
+        HOME: /root
     matrix:
         - env:
             ARCH: "x86_64"
@@ -87,6 +88,8 @@ verify_windows_task:
 verify_macos_task:
     name: "Verify AppleHV"
     alias: "verify_macos"
+    depends_on:
+        - image_build
     persistent_worker: &mac_pw
     labels:
         os: darwin
@@ -104,6 +107,7 @@ verify_macos_task:
         MACHINE_IMAGE: "stage-machine-os.${ARCH}.applehv.raw.zst"
     prep_script: &mac_cleanup "contrib/cirrus/mac_cleanup.sh"
     setup_script: |
+        echo curl --retry 5 --retry-delay 8 --fail --location -O --url "${MACHINE_IMAGE_URL}"
         curl --retry 5 --retry-delay 8 --fail --location -O
         --url "${MACHINE_IMAGE_URL}"
         git clone --depth 1 --branch ${PODMAN_VERSION} https://github.com/containers/podman.git
@@ -114,6 +118,7 @@ verify_macos_task:
         go build -o ../bin/ginkgo.exe ./vendor/github.com/onsi/ginkgo/v2/ginkgo
     main_script: |
         export CONTAINERS_MACHINE_PROVIDER="applehv"
+        export MACHINE_IMAGE_PATH="..\${MACHINE_IMAGE}"
         ./bin/ginkgo ./verify
 
     # This host is/was shared with potentially many other CI tasks.
