@@ -1,0 +1,26 @@
+From 1f10397fe12c2a906bf09f8274552eec76c7983d Mon Sep 17 00:00:00 2001
+From: Lokesh Mandvekar <lsm5@fedoraproject.org>
+Date: Mon, 4 Nov 2024 21:12:38 +0530
+Subject: [PATCH] use /var/tmp for tmpdir
+
+Signed-off-by: Lokesh Mandvekar <lsm5@fedoraproject.org>
+---
+ custom-coreos-disk-images.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/custom-coreos-disk-images.sh b/custom-coreos-disk-images.sh
+index 05dc367..acb860c 100755
+--- a/custom-coreos-disk-images.sh
++++ b/custom-coreos-disk-images.sh
+@@ -114,7 +114,7 @@ main() {
+     fi
+
+     # Make a local tmpdir
+-    tmpdir=$(mktemp -d ./tmp-osbuild-XXX)
++    tmpdir=$(mktemp -d /var/tmp/tmp-osbuild-XXX)
+
+     # Freeze on specific version for now to increase stability.
+     #gitreporef="main"
+-- 
+2.47.0
+

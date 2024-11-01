@@ -20,6 +20,8 @@ prepare:
         hardware:
             virtualization:
                 is-virtualized: false
+            disk:
+                - size: '>= 500 GB'
     execute:
         how: tmt
         script: bash tmt-test.sh

@@ -6,9 +6,14 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-if [[ ! -d "build-podman-machine-os-disks" ]]; then
-    git clone https://github.com/dustymabe/build-podman-machine-os-disks
-fi
+# THIS WILL CHANGE AFTER
+# https://github.com/coreos/custom-coreos-disk-images/pull/6/files is merged
+rm -f custom-coreos-disk-images
+git clone https://github.com/dustymabe/custom-coreos-disk-images
+pushd custom-coreos-disk-images
+git checkout dusty-updates
+git am < ../0001-use-var-tmp-for-tmpdir.patch
+popd
 
 echo " Building image locally"
 
@@ -29,8 +34,7 @@ podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE
 
 echo "Transforming OCI image into disk image"
 SRCDIR="${TMT_TREE:-..}"
-pushd $OUTDIR && sudo sh $SRCDIR/build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
-
+pushd $OUTDIR && sudo sh $SRCDIR/custom-coreos-disk-images/custom-coreos-disk-images.sh --ociarchive "${PWD}/${DISK_IMAGE_NAME}" --platforms applehv,hyperv,qemu
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
 for DISK in "${DISK_FLAVORS_W_SUFFIX[@]}"; do
