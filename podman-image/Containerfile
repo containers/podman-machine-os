@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora-coreos:testing
+FROM quay.io/fedora/fedora-coreos:stable
 
 ARG PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE}
 ARG PODMAN_VERSION=${PODMAN_VERSION}
