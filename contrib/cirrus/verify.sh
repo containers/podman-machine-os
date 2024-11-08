@@ -16,5 +16,5 @@ source ./util.sh
 mkdir -p bin
 cd verify
 go build -o ../bin/ginkgo ./vendor/github.com/onsi/ginkgo/v2/ginkgo
-export MACHINE_IMAGE_PATH="../$OUTDIR/$DISK_IMAGE_NAME.$ARCH.qemu.qcow2.zst"
+export MACHINE_IMAGE_PATH="../$OUTDIR/$DISK_IMAGE_NAME.$(uname -m).qemu.qcow2.zst"
 ../bin/ginkgo -v
