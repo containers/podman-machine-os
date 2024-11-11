@@ -50,9 +50,11 @@ image_build_task:
     setup_script: ./contrib/cirrus/setup.sh
     build_script: ./build.sh
     verify_script: ./contrib/cirrus/verify.sh
-    image_prep_script: "mv $OUTDIR/*.zst ."
+    image_prep_script: |
+        mv $OUTDIR/*.zst .
+        mv $OUTDIR/podman-machine podman-machine.${ARCH}.tar
     image_artifacts: &image_artifacts
-        path: "*.zst"
+        path: "*.{zst,tar}"
         type: application/octet-stream
 
 verify_windows_task:

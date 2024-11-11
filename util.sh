@@ -2,7 +2,7 @@
 
 source ./podman-rpm-info-vars.sh
 
-CPU_ARCH=`lscpu --json | jq .lscpu.[0].data | tr -d '"'`
+CPU_ARCH=$(uname -m)
 ARCHES=("x86_64" "aarch64")
 IMAGE_ARCHES=("amd64" "arm64")
 
