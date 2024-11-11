@@ -19,8 +19,8 @@ podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/p
     --build-arg PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE} \
     --build-arg PODMAN_VERSION=${PODMAN_VERSION} \
     --build-arg PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE} \
-    --build-arg FEDORA_RELEASE=${FEDORA_RELEASE} \
-    --build-arg ARCH=${ARCH}
+    --build-arg FEDORA_RELEASE=$(rpm --eval '%{?fedora}') \
+    --build-arg ARCH=$(uname -m)
 
 echo "Saving image from image store to filesystem"
 
@@ -34,7 +34,7 @@ pushd $OUTDIR && sudo sh $SRCDIR/build-podman-machine-os-disks/build-podman-mach
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
 for DISK in "${DISK_FLAVORS_W_SUFFIX[@]}"; do
-  zstd -T0 -14 "${DISK_IMAGE_NAME}.${CPU_ARCH}.${DISK}"
+  zstd --rm -T0 -14 "${DISK_IMAGE_NAME}.${CPU_ARCH}.${DISK}"
 done
 
 popd
