@@ -1,4 +1,7 @@
-FROM quay.io/fedora/fedora-coreos:stable
+# FIXME: Hard code digest for now, the stable branch was just switch to f41
+# which uses composefs and that does not allow us to create root directories in /.
+# Switch tag back to stable once we have have a fix for that.
+FROM quay.io/fedora/fedora-coreos@sha256:868e4df83490c7064b9e22f1dcb39fe459dad2fdccca94cb9fb295e05760f6b6
 
 ARG PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE}
 ARG PODMAN_VERSION=${PODMAN_VERSION}
