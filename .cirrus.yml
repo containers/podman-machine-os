@@ -89,8 +89,7 @@ test_task:
     alias: success
     depends_on:
         - image_build
-        # Windows fails with file in use so make it ""optional" by not failing success task on it
-        # - verify_windows
+        - verify_windows
     container:
         image: "${FEDORA_CONTAINER_FQIN}"
         cpu: 1
