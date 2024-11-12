@@ -54,7 +54,11 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterEach(func() {
-	fmt.Println("Goodbye world")
+	clean := []string{"machine", "reset", "-f"}
+	_, err := mb.setCmd(clean).run()
+	if err != nil {
+		fmt.Println("Error cleaning up after test: ", err)
+	}
 })
 
 var _ = SynchronizedAfterSuite(func() {}, func() {
