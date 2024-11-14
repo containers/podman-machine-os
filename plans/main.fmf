@@ -1,7 +1,9 @@
 prepare:
     - how: install
       package:
+        - dosfstools
         - golang
+        - jq
         - osbuild
         - osbuild-ostree
         - osbuild-tools
