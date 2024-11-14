@@ -34,13 +34,13 @@ jobs:
               run: |
                   ccirjson=$GITHUB_WORKSPACE/cirrus-ci_retrospective.json
                   prn=$(jq --raw-output \
-                        '.[] | select(.name == "'success'") | .build.pullRequest' \
+                        '.[] | select(.name == "Total Success") | .build.pullRequest' \
                         "$ccirjson")
                   bid=$(jq --raw-output \
-                        '.[] | select(.name == "'success'") | .build.id' \
+                        '.[] | select(.name == "Total Success") | .build.id' \
                         "$ccirjson")
                   status=$(jq --raw-output \
-                        '.[] | select(.name == "'success'") | .status' \
+                        '.[] | select(.name == "Total Success") | .status' \
                         "$ccirjson")
 
                   if [[ -n "$prn" ]] && \
