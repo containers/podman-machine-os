@@ -8,6 +8,7 @@ echo "Preparing to build ${FULL_IMAGE_NAME}"
 
 if [[ ! -d "build-podman-machine-os-disks" ]]; then
     git clone https://github.com/dustymabe/build-podman-machine-os-disks
+    sed -i -e 's|fedora:quay.io/containers.*"|fedora:quay.io/podman/machine-os:${PODMAN_VERSION%.*}"|' build-podman-machine-os-disks/build-podman-machine-os-disks.sh
 fi
 
 echo " Building image locally"
@@ -28,7 +29,7 @@ mkdir -p $OUTDIR
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-pushd $OUTDIR && sudo sh $SRCDIR/build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
+pushd $OUTDIR && sh $SRCDIR/build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
 
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
