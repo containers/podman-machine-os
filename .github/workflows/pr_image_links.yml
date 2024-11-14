@@ -68,7 +68,7 @@ jobs:
               run: ./contrib/cirrus/print-artifacts-urls.sh "${{ steps.retro.outputs.bid }}"
 
             - if: steps.retro.outputs.is_pr == 'true'
-              name: Count the number of manifest.json files downloaded
+              name: Send GitHub PR comment
               uses: thollander/actions-comment-pull-request@v3
               with:
                   pr-number: ${{ steps.retro.outputs.prn }}
