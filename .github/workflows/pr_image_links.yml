@@ -65,7 +65,10 @@ jobs:
             - if: steps.retro.outputs.is_pr == 'true'
               name: Print Artifacts output
               id: artifact_output
-              run: ./contrib/cirrus/print-artifacts-urls.sh "${{ steps.retro.outputs.bid }}"
+              run: |
+                  echo 'comment<<EOF' >> $GITHUB_OUTPUT
+                  ./contrib/cirrus/print-artifacts-urls.sh "${{ steps.retro.outputs.bid }}" >> $GITHUB_OUTPUT
+                  echo 'EOF' >> $GITHUB_OUTPUT
 
             - if: steps.retro.outputs.is_pr == 'true'
               name: Send GitHub PR comment
@@ -75,4 +78,4 @@ jobs:
                   # the tag causes it to replace the comment
                   comment-tag: artifacts
                   mode: recreate
-                  message: ${{ steps.artifact_output.outputs.stdout }}
+                  message: "${{ steps.artifact_output.outputs.comment }}"

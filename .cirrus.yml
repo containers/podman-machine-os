@@ -74,7 +74,7 @@ verify_windows_task:
         PATH: "${PATH};C:\\Program Files\\RedHat\\Podman"
         MACHINE_IMAGE: "podman-machine.${ARCH}.hyperv.vhdx.zst"
         MACHINE_IMAGE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/Image Build ${ARCH}/image/${MACHINE_IMAGE}"
-        PODMAN_VERSION: 5.2.5
+        PODMAN_VERSION: 5.3.0
     setup_script: .\contrib\cirrus\windows_setup.ps1
     main_script: |
         $Env:CONTAINERS_MACHINE_PROVIDER = "hyperv"
