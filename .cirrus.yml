@@ -65,7 +65,7 @@ image_build_task:
         type: application/octet-stream
 
 verify_windows_task:
-    name: "Verify HyperV"
+    name: "Verify hyperv"
     alias: "verify_windows"
     depends_on:
         - image_build
@@ -90,7 +90,7 @@ verify_windows_task:
         }
 
 verify_macos_task:
-    name: "Verify AppleHV"
+    name: "Verify $CONTAINERS_MACHINE_PROVIDER"
     alias: "verify_macos"
     depends_on:
         - image_build
@@ -109,6 +109,12 @@ verify_macos_task:
         GOENV: "$CIRRUS_WORKING_DIR/.go/support"
         GOSRC: "$HOME/ci/task-${CIRRUS_TASK_ID}"
         MACHINE_IMAGE: "podman-machine.${ARCH}.applehv.raw.zst"
+    matrix:
+        - env:
+            CONTAINERS_MACHINE_PROVIDER: applehv
+        - env:
+            CONTAINERS_MACHINE_PROVIDER: libkrun
+
     prep_script: &mac_cleanup "contrib/cirrus/mac_cleanup.sh"
     setup_script: |
         # curl does not accept URL with spaces, we need to URL encode (string replace with %20)
@@ -121,7 +127,6 @@ verify_macos_task:
         cd verify
         go build -o ../bin/ginkgo ./vendor/github.com/onsi/ginkgo/v2/ginkgo
     main_script: |
-        export CONTAINERS_MACHINE_PROVIDER="applehv"
         export MACHINE_IMAGE_PATH="../${MACHINE_IMAGE}"
         export PODMAN_BINARY=../podman/bin/darwin/podman
         ./bin/ginkgo -v ./verify
