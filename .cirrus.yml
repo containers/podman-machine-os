@@ -22,8 +22,13 @@ env:
     # directory where the images will be placed
     OUTDIR: "outdir"
 
-    HOME: /root
     CIRRUS_WORKING_DIR: /var/tmp/podman-machine-os
+
+    # Vars used for the macos and windows testing
+    MACHINE_IMAGE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/Image Build ${ARCH}/image/${MACHINE_IMAGE}"
+    PODMAN_VERSION: 5.3.0
+
+gcp_credentials: ENCRYPTED[b06ef3490b73469d9da1402568d6f3e46a852955a4ab0807689d50352ecf2852cb5903e8d3b7603eaab9d1c7c7d851a5]
 
 aws_credentials: ENCRYPTED[b01991b35fe3f81eed974cf47b5541ed518eacfee4e430e9fb50fba31090f557ea86b0b79b5f5b4a712218206e0f3f58]
 
@@ -37,6 +42,8 @@ image_build_task:
         image: "${VM_IMAGE}"
         type: "${EC2_INST_TYPE}"
         region: us-east-1
+    env:
+        HOME: /root
     matrix:
         - env:
             ARCH: "x86_64"
@@ -58,7 +65,7 @@ image_build_task:
         type: application/octet-stream
 
 verify_windows_task:
-    name: "Verify HyperV"
+    name: "Verify hyperv"
     alias: "verify_windows"
     depends_on:
         - image_build
@@ -73,16 +80,61 @@ verify_windows_task:
         CIRRUS_SHELL: powershell
         PATH: "${PATH};C:\\Program Files\\RedHat\\Podman"
         MACHINE_IMAGE: "podman-machine.${ARCH}.hyperv.vhdx.zst"
-        MACHINE_IMAGE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/Image Build ${ARCH}/image/${MACHINE_IMAGE}"
-        PODMAN_VERSION: 5.3.0
     setup_script: .\contrib\cirrus\windows_setup.ps1
     main_script: |
         $Env:CONTAINERS_MACHINE_PROVIDER = "hyperv"
         $Env:MACHINE_IMAGE_PATH="..\${ENV:MACHINE_IMAGE}"
-        .\bin\ginkgo .\verify
+        .\bin\ginkgo -v .\verify
         if ( ($LASTEXITCODE -ne $null) -and ($LASTEXITCODE -ne 0) ) {
             throw "Exit code = '$LASTEXITCODE' running ginkgo"
         }
+
+verify_macos_task:
+    name: "Verify $CONTAINERS_MACHINE_PROVIDER"
+    alias: "verify_macos"
+    depends_on:
+        - image_build
+    persistent_worker: &mac_pw
+    labels:
+        os: darwin
+        arch: arm64
+        purpose: prod
+    env: &mac_env
+        ARCH: "aarch64"
+        CIRRUS_SHELL: "/bin/bash"  # sh is the default
+        CIRRUS_WORKING_DIR: "$HOME/ci/task-${CIRRUS_TASK_ID}"  # Isolation: $HOME will be set to "ci" dir.
+        # Prevent cache-pollution fron one task to the next.
+        GOPATH: "$CIRRUS_WORKING_DIR/.go"
+        GOCACHE: "$CIRRUS_WORKING_DIR/.go/cache"
+        GOENV: "$CIRRUS_WORKING_DIR/.go/support"
+        GOSRC: "$HOME/ci/task-${CIRRUS_TASK_ID}"
+        MACHINE_IMAGE: "podman-machine.${ARCH}.applehv.raw.zst"
+    matrix:
+        - env:
+            CONTAINERS_MACHINE_PROVIDER: applehv
+        - env:
+            CONTAINERS_MACHINE_PROVIDER: libkrun
+
+    prep_script: &mac_cleanup "contrib/cirrus/mac_cleanup.sh"
+    setup_script: |
+        # curl does not accept URL with spaces, we need to URL encode (string replace with %20)
+        MACHINE_IMAGE_URL="${MACHINE_IMAGE_URL// /%20}"
+        curl --retry 5 --retry-delay 8 --fail --location -O --url "${MACHINE_IMAGE_URL}"
+        git clone --depth 1 --branch v${PODMAN_VERSION} https://github.com/containers/podman.git
+        make -C podman podman-remote
+        ./podman/bin/darwin/podman --version
+        mkdir bin
+        cd verify
+        go build -o ../bin/ginkgo ./vendor/github.com/onsi/ginkgo/v2/ginkgo
+    main_script: |
+        export MACHINE_IMAGE_PATH="../${MACHINE_IMAGE}"
+        export PODMAN_BINARY=../podman/bin/darwin/podman
+        ./bin/ginkgo -v ./verify
+
+    # This host is/was shared with potentially many other CI tasks.
+    # Ensure nothing is left running while waiting for the next task.
+    always:
+        task_cleanup_script: *mac_cleanup
 
 test_task:
     name: "Total Success"
@@ -90,6 +142,7 @@ test_task:
     depends_on:
         - image_build
         - verify_windows
+        - verify_macos
     container:
         image: "${FEDORA_CONTAINER_FQIN}"
         cpu: 1

@@ -18,6 +18,9 @@ To run these tests, a few things need to be in order prior.
 Podman binary names will differ based on operating system.  For Linux, use
 the `podman-remote` binary.  For all other platforms, use the `podman` binary.
 
+Set the `PODMAN_BINARY` environment variable to specify the path of the binary
+to use.
+
 ### How to run the image verification tests
 
 The tests need to be run from the `podman-machine-os/verify` directory. The syntax
