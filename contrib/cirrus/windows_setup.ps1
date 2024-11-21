@@ -25,7 +25,7 @@ function download($uri, $file) {
 download "${ENV:MACHINE_IMAGE_URL}" "${ENV:MACHINE_IMAGE}"
 
 # Download and install podman
-$uri = "https://github.com/containers/podman/releases/download/v${ENV:PODMAN_VERSION}/podman-${ENV:PODMAN_VERSION}-setup.exe"
+$uri = "https://github.com/containers/podman/releases/download/v${ENV:PODMAN_INSTALL_VERSION}/podman-${ENV:PODMAN_INSTALL_VERSION}-setup.exe"
 $installer = "podman-setup.exe"
 download "$uri" "$installer"
 
