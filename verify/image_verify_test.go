@@ -50,23 +50,6 @@ func TestMachine(t *testing.T) {
 	RunSpecs(t, "Podman Machine tests")
 }
 
-var _ = BeforeSuite(func() {
-	fmt.Println("Hello world")
-})
-
-var _ = AfterEach(func() {
-	fmt.Println("Goodbye world")
-})
-
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	//slices.SortFunc(timings, func(a, b timing) int {
-	//	return cmp.Compare(a.length, b.length)
-	//})
-	//for _, t := range timings {
-	//	GinkgoWriter.Printf("%s\t\t%f seconds\n", t.name, t.length.Seconds())
-	//}
-})
-
 func setup() (string, *imageTestBuilder) {
 	homeDir, err := os.MkdirTemp(tmpDir, "podman_test")
 	if err != nil {
