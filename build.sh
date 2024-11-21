@@ -13,6 +13,13 @@ fi
 
 echo " Building image locally"
 
+# Validate podman RPM type var, see the Containerfile for the pull logic.
+case "${PODMAN_RPM_TYPE}" in
+  "dev") echo "Will install podman from the podman-next copr, the podman version is ignored" ;;
+  "release") ;;
+  *) echo 'PODMAN_RPM_TYPE must be set to "dev" or "release"' 1>&2; exit 1
+esac
+
 # See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_RPM_TYPE is
 # "dev", the rpm version, release and fedora release values are of no concern
 # to the build process.

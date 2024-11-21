@@ -251,6 +251,9 @@ func runSystemCommand(binary string, cmdArgs []string, timeout time.Duration, wa
 // Note: this will need to be moved Linux and everything else
 // to distinguish between podman and podman-remote
 func getPodmanBinary() (string, error) {
+	if env := os.Getenv("PODMAN_BINARY"); env != "" {
+		return env, nil
+	}
 	podmanBinary := getPodmanBinaryName()
 	return exec.LookPath(podmanBinary)
 }
