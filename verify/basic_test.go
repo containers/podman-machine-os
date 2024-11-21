@@ -1,6 +1,9 @@
 package verify
 
 import (
+	"os"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gexec"
@@ -88,5 +91,20 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(sshSession).To(Exit(3))
 		Expect(sshSession.outputToString()).To(Equal("inactive"))
+
+		// set by podman-rpm-info-vars.sh
+		if version := os.Getenv("PODMAN_VERSION"); version != "" {
+			// version is x.y.z while image uses x.y, remove .z so we can match
+			index := strings.LastIndex(version, ".")
+			if index >= 0 {
+				version = version[:index]
+			}
+			// verify the rpm-ostree image inside uses the proper podman image reference
+			sshSession, err = mb.setCmd([]string{"machine", "ssh", machineName, "sudo rpm-ostree status --json | jq -r '.deployments[0].\"container-image-reference\"'"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(0))
+			Expect(sshSession.outputToString()).
+				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + version))
+		}
 	})
 })
