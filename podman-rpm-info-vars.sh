@@ -6,5 +6,5 @@ export PODMAN_RPM_TYPE="release"
 
 # If PODMAN_RPM_TYPE is "dev", the vars below don't end up getting used in the
 # build
-export PODMAN_VERSION="5.3.0"
+export PODMAN_VERSION="5.3.1"
 export PODMAN_RPM_RELEASE="1"
