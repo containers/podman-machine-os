@@ -39,6 +39,8 @@ timeout_in: 30m
 image_build_task:
     name: "Image Build ${ARCH}"
     alias: "image_build"
+    # Building takes a long time so give it a bit more timeout.
+    timeout_in: 45m
     ec2_instance:
         image: "${VM_IMAGE}"
         type: "${EC2_INST_TYPE}"
