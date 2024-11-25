@@ -9,6 +9,7 @@ echo "Preparing to build ${FULL_IMAGE_NAME}"
 if [[ ! -d "custom-coreos-disk-images" ]]; then
     # FIXME: pin this to a commit to net get broken all of the sudden
     git clone https://github.com/coreos/custom-coreos-disk-images
+    sed -i -e 's|"${image_size}"|"$((${image_size}*2))"|' custom-coreos-disk-images/custom-coreos-disk-images.sh
 fi
 
 echo " Building image locally"
