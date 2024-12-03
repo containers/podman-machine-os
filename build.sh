@@ -41,7 +41,8 @@ pushd $OUTDIR && sh $SRCDIR/custom-coreos-disk-images/custom-coreos-disk-images.
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
   --imgref "ostree-remote-registry:fedora:quay.io/podman/machine-os:${PODMAN_VERSION%.*}" \
-  --metal-image-size 6144
+  --metal-image-size 6144 \
+  --extra-kargs='ostree.prepare-root.composefs=0'
 
 
 declare -A COREOS_PLATFORM_SUFFIX=(
