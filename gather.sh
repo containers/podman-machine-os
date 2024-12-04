@@ -6,8 +6,13 @@ source ./util.sh
 
 # This script assume that the build disk images/oci image exists in $OUTDIR.
 
+cirrusBuildIdAnnoation=""
+if [[ -n $CIRRUS_BUILD_ID ]]; then
+  cirrusBuildIdAnnoation="--annotation cirrus.buildid=$CIRRUS_BUILD_ID"
+fi
+
 # Create our manifest
-buildah manifest create "${FULL_IMAGE_NAME}"
+buildah manifest create $cirrusBuildIdAnnoation "${FULL_IMAGE_NAME}"
 
 # Load and add OCI image to manifest
 for arch in "${!ARCH_TO_IMAGE_ARCH[@]}"; do
