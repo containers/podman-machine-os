@@ -6,10 +6,12 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-if [[ ! -d "custom-coreos-disk-images" ]]; then
-    # FIXME: pin this to a commit to net get broken all of the sudden
-    git clone https://github.com/coreos/custom-coreos-disk-images
-fi
+# Freeze on specific version for now to increase stability.
+#gitreporef="main"
+# TODO: setup/configure renovate to update the sha here.
+gitreporef="06c3faf27826e17d6ea051ad023ba38879593e1b"
+gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
+curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
 
 echo " Building image locally"
 
@@ -36,42 +38,31 @@ mkdir -p $OUTDIR
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-pushd $OUTDIR && sh $SRCDIR/custom-coreos-disk-images/custom-coreos-disk-images.sh \
+pushd $OUTDIR && sh $SRCDIR/custom-coreos-disk-images.sh \
   --platforms applehv,hyperv,qemu \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
-  --imgref "ostree-remote-registry:fedora:quay.io/podman/machine-os:${PODMAN_VERSION%.*}" \
+  --imgref "ostree-remote-registry:fedora:$FULL_IMAGE_NAME" \
   --metal-image-size 6144 \
   --extra-kargs='ostree.prepare-root.composefs=0'
 
 
 declare -A COREOS_PLATFORM_SUFFIX=(
-    ['applehv']='raw.gz'
-    ['hyperv']='vhdx.zip'
+    ['applehv']='raw'
+    ['hyperv']='vhdx'
     ['qemu']='qcow2'
 )
 
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
 for hypervisor in "${!COREOS_PLATFORM_SUFFIX[@]}"; do
+  # Rename the file to our preferred format
   extension="${COREOS_PLATFORM_SUFFIX[$hypervisor]}"
   filename="${DISK_IMAGE_NAME}-${hypervisor}.${CPU_ARCH}.${extension}"
-  case "${extension##*.}" in
-    "gz")
-      time gzip -d $filename
-      # trim of .gz
-      filename="${filename%.*}"
-      ;;
-    "zip")
-      time unzip $filename
-      # trim of .zip
-      filename="${filename%.*}"
-    ;;
-  esac
-
-  newfilename="${DISK_IMAGE_NAME}.${CPU_ARCH}.${hypervisor}.${filename##*.}"
+  newfilename="${DISK_IMAGE_NAME}.${CPU_ARCH}.${hypervisor}.${extension}"
   mv "$filename" "$newfilename"
 
+  # Compress the file
   zstd --rm -T0 -14 "$newfilename"
 done
 
