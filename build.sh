@@ -25,10 +25,6 @@ esac
 # to the build process.
 podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/podman-image \
     --build-arg PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE} \
-    --build-arg PODMAN_VERSION=${PODMAN_VERSION} \
-    --build-arg PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE} \
-    --build-arg FEDORA_RELEASE=$(rpm --eval '%{?fedora}') \
-    --build-arg ARCH=$(uname -m)
 
 echo "Saving image from image store to filesystem"
 
