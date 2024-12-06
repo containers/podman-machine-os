@@ -4,11 +4,12 @@
 FROM quay.io/fedora/fedora-coreos@sha256:868e4df83490c7064b9e22f1dcb39fe459dad2fdccca94cb9fb295e05760f6b6
 
 ARG PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE}
-ARG PODMAN_VERSION=${PODMAN_VERSION}
-ARG PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE}
-ARG FEDORA_RELEASE=${FEDORA_RELEASE}
-ARG ARCH=${ARCH}
-ARG PODMAN_RPM_URL="https://kojipkgs.fedoraproject.org/packages/podman/${PODMAN_VERSION}/${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}/${ARCH}/podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}.rpm"
+ARG FEDORA_RELEASE
+RUN rpm --eval '%{?fedora}' | tee /dev/stdout > ${FEDORA_RELEASE}
+ARG ARCH
+RUN arch | tee /dev/stdout > ${ARCH}
+# Upstream Podman release PR number
+ARG PODMAN_PR_NUM="24747"
 
 # Make required directories
 RUN mkdir -p /etc/containers/registries.conf.d && \
@@ -38,20 +39,24 @@ COPY delegate.conf /etc/systemd/system/user@.service.d/delegate.conf
 ADD https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman-next/repo/fedora-rawhide/rhcontainerbot-podman-next-fedora-rawhide.repos /etc/yum.repos.d/rhcontainerbot-podman-next-fedora.repo
 ADD https://download.copr.fedorainfracloud.org/results/rhcontainerbot/podman-next/pubkey.gpg /etc/pki/rpm-gpg/rhcontainerbot-podman-next-fedora.gpg
 
+ADD https://copr.fedorainfracloud.org/coprs/packit/containers-podman-${PODMAN_PR_NUM}/repo/fedora-${FEDORA_RELEASE}/packit-containers-podman-${PODMAN_PR_NUM}-fedora-${FEDORA_RELEASE}.repo /etc/yum.repos.d/podman-release-copr.repo
+ADD https://download.copr.fedorainfracloud.org/results/packit/containers-podman-${PODMAN_PR_NUM}/pubkey.gpg /etc/pki/rpm-gpg/podman-release-copr.gpg
+
 # 1. For dev builds, replace aardvark-dns, conmon, crun, netavark, podman, containers-common
 # 2. For release builds, fetch the build from koji
 # 3. Remove moby-engine, containerd, runc, zincati for both dev and release builds
 # Note: Currently does not result in a size reduction for the container image
 
 RUN if [[ ${PODMAN_RPM_TYPE} == "dev" ]]; then \
+        rm /etc/yum.repos.d/podman-release-copr.repo /etc/pki/rpm-gpg/podman-release-copr.gpg
         rpm-ostree override replace --experimental --freeze \
         --from repo="copr:copr.fedorainfracloud.org:rhcontainerbot:podman-next" \
         aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm; \
     else \
         rm /etc/yum.repos.d/rhcontainerbot*.repo /etc/pki/rpm-gpg/rhcontainerbot*.gpg; \
-        if [[ $(rpm -q podman) != "podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}" ]]; then \
-            rpm-ostree override replace ${PODMAN_RPM_URL}; \
-        fi; \
+        rpm-ostree override replace --experimental --freeze \
+        --from repo="copr:copr.fedorainfracloud.org:packit:containers-podman-${PODMAN_PR_NUM}" \
+        podman
     fi; \
     rpm-ostree override remove moby-engine containerd runc; \
     rm -fr /var/cache && ostree container commit

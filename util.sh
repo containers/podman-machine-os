@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source ./podman-rpm-info-vars.sh
-
 CPU_ARCH=$(uname -m)
 ARCHES=("x86_64" "aarch64")
 IMAGE_ARCHES=("amd64" "arm64")
@@ -57,3 +55,7 @@ FULL_IMAGE_NAME="${REPO}/${OCI_NAME}:${OCI_VERSION}"
 
 
 FULL_IMAGE_NAME_ARCH="$FULL_IMAGE_NAME-"$(image_arch_from_cpu)
+
+# Set to "dev" to pull from the podman-next copr, set to "release"
+# to pull the rpm from the packit jobs on the upstream release PR
+export PODMAN_RPM_TYPE="release"
