@@ -7,7 +7,7 @@ source ./util.sh
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
 # Freeze on specific version for now to increase stability.
-#gitreporef="main"
+#gitreporef="06c3faf27826e17d6ea051ad023ba38879593e1b"
 # TODO: setup/configure renovate to update the sha here.
 gitreporef="06c3faf27826e17d6ea051ad023ba38879593e1b"
 gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
