@@ -6,9 +6,9 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-# Freeze on specific version for now to increase stability.
-#gitreporef="main"
-# TODO: setup/configure renovate to update the sha here.
+# Freeze on specific commit to increase stability.
+# Renovate is configured to update to a new commit so do not update the format
+# without updating the renovate config, see .github/renovate.json5.
 gitreporef="06c3faf27826e17d6ea051ad023ba38879593e1b"
 gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
 curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
