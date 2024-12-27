@@ -1,5 +1,5 @@
-github.com/containers/storage v1.55.0 h1:wTWZ3YpcQf1F+dSP4KxG9iqDfpQY1otaUXjPpffuhgg=
-github.com/containers/storage v1.55.0/go.mod h1:28cB81IDk+y7ok60Of6u52RbCeBRucbFOeLunhER1RQ=
+github.com/containers/storage v1.56.0 h1:DZ9KSkj6M2tvj/4bBoaJu3QDHRl35BwsZ4kmLJS97ZI=
+github.com/containers/storage v1.56.0/go.mod h1:c6WKowcAlED/DkWGNuL9bvGYqIWCVy7isRMdCSKWNjk=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=

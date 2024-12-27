@@ -1,5 +1,5 @@
-# github.com/containers/storage v1.55.0
-## explicit; go 1.21
+# github.com/containers/storage v1.56.0
+## explicit; go 1.22.0
 github.com/containers/storage/pkg/regexp
 github.com/containers/storage/pkg/stringid
 # github.com/go-logr/logr v1.4.2
