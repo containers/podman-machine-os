@@ -8,4 +8,4 @@ export PODMAN_RPM_TYPE="dev"
 # However it is always used to derive the machine-os image tag (x.y) so this must be valid
 # at any given time.
 export PODMAN_VERSION="5.4.0-dev"
-export PODMAN_RPM_RELEASE="1"
+export PODMAN_PR_NUM="24369"
