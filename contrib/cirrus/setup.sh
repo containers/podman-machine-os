@@ -2,10 +2,6 @@
 
 set -xeo pipefail
 
-# install extra dependencies.
-# TODO: Do we need to move them into the image build process?
-dnf install -y osbuild osbuild-tools osbuild-ostree jq xfsprogs e2fsprogs podman podman-machine podman-remote gvisor-tap-vsock
-
 # Build process must run with selinux disabled?!
 setenforce 0
 

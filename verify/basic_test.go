@@ -107,4 +107,22 @@ var _ = Describe("run basic podman commands", func() {
 				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + version))
 		}
 	})
+
+	It("machine stop/start cycle", func() {
+		// We have seen an issue while stopping and starting machines again
+		// and then causing ssh failures on the second start. So test it.
+		machineName, session, err := mb.initNowWithName()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(session).To(Exit(0))
+
+		stopMachineCmd := []string{"machine", "stop", machineName}
+		stopMachineSession, err := mb.setCmd(stopMachineCmd).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(stopMachineSession).To(Exit(0))
+
+		startMachineCmd := []string{"machine", "start", machineName}
+		startMachineSession, err := mb.setCmd(startMachineCmd).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(startMachineSession).To(Exit(0))
+	})
 })

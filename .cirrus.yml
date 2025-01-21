@@ -9,7 +9,7 @@ env:
     FEDORA_AARCH64_NAME: "${FEDORA_NAME}-aarch64"
 
     # Image identifiers
-    IMAGE_SUFFIX: "c20241016t144444z-f40f39d13"
+    IMAGE_SUFFIX: "c20250107t132430z-f41f40d13"
 
     # EC2 images
     FEDORA_AMI: "fedora-aws-${IMAGE_SUFFIX}"
@@ -25,7 +25,7 @@ env:
     CIRRUS_WORKING_DIR: /var/tmp/podman-machine-os
 
     # Vars used for the macos and windows testing
-    MACHINE_IMAGE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/Image Build ${ARCH}/image/${MACHINE_IMAGE}"
+    MACHINE_IMAGE_BASE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/image_build/image/"
     # podman version used by windows/macos verify suite
     PODMAN_INSTALL_VERSION: 5.3.1
 
@@ -43,15 +43,18 @@ image_build_task:
         image: "${VM_IMAGE}"
         type: "${EC2_INST_TYPE}"
         region: us-east-1
+        architecture: "${GO_ARCH}"
     env:
         HOME: /root
     matrix:
         - env:
             ARCH: "x86_64"
+            GO_ARCH: "amd64"
             VM_IMAGE: "${FEDORA_AMI}"
             EC2_INST_TYPE: "m5zn.metal"  # Bare-metal instance is required
         - env:
             ARCH: "aarch64"
+            GO_ARCH: "arm64"
             VM_IMAGE: "${FEDORA_AARCH64_AMI}"
             EC2_INST_TYPE: "c6g.metal"  # Bare-metal instance is required
 
@@ -118,9 +121,7 @@ verify_macos_task:
 
     prep_script: &mac_cleanup "contrib/cirrus/mac_cleanup.sh"
     setup_script: |
-        # curl does not accept URL with spaces, we need to URL encode (string replace with %20)
-        MACHINE_IMAGE_URL="${MACHINE_IMAGE_URL// /%20}"
-        curl --retry 5 --retry-delay 8 --fail --location -O --url "${MACHINE_IMAGE_URL}"
+        curl --retry 5 --retry-delay 8 --fail --location -O --url "${MACHINE_IMAGE_BASE_URL}${MACHINE_IMAGE}"
         git clone --depth 1 --branch v${PODMAN_INSTALL_VERSION} https://github.com/containers/podman.git
         make -C podman podman-remote
         ./podman/bin/darwin/podman --version
@@ -138,11 +139,50 @@ verify_macos_task:
     always:
         task_cleanup_script: *mac_cleanup
 
+image_push_task:
+    name: "Image Push"
+    alias: "image_push"
+    # Make sure that there are not two push running at the same time.
+    execution_lock: $CIRRUS_BRANCH
+    # Less likely the task is canceled.
+    stateful: true
+    # Only push new images when not run on a PR.
+    only_if: $CIRRUS_PR == ""
+    depends_on:
+        - verify_windows
+        - verify_macos
+        - image_build
+    ec2_instance:
+        image: "${VM_IMAGE}"
+        type: "${EC2_INST_TYPE}"
+        region: us-east-1
+    env:
+        HOME: /root
+        VM_IMAGE: "${FEDORA_AMI}"
+        EC2_INST_TYPE: "m5.large"
+        QUAY_USER: ENCRYPTED[53d23fbd39a3b8b0daf015edac296b56964da0b523767f79d3a8131a4871523b90c5a7554c91172c1ca0066e492853e3]
+        QUAY_PASSWORD: ENCRYPTED[3cfabb0f7fa6a36dc6af433f5a0291d87b38402c922b662e9647931a635f20ca33401aa91b29745b7af252538406a292]
+
+    main_script: |
+        mkdir $OUTDIR
+        for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst tar; do
+            for arch in x86_64 aarch64; do
+                name="podman-machine.$arch.$end"
+                curl --retry 5 --retry-delay 8 --fail --location -O --output-dir $OUTDIR --url "${MACHINE_IMAGE_BASE_URL}$name"
+            done
+        done
+
+        source ./gather.sh
+        podman images
+        podman login -u "$QUAY_USER" --password-stdin quay.io <<<"$QUAY_PASSWORD"
+        time podman manifest push --all "$FULL_IMAGE_NAME"
+
 test_task:
     name: "Total Success"
     alias: success
     depends_on:
         - image_build
+        - image_push
         - verify_windows
         - verify_macos
     container:

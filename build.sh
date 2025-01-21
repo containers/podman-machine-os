@@ -6,10 +6,12 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-if [[ ! -d "build-podman-machine-os-disks" ]]; then
-    git clone https://github.com/dustymabe/build-podman-machine-os-disks
-    sed -i -e 's|fedora:quay.io/containers.*"|fedora:quay.io/podman/machine-os:${PODMAN_VERSION%.*}"|' build-podman-machine-os-disks/build-podman-machine-os-disks.sh
-fi
+# Freeze on specific commit to increase stability.
+# Renovate is configured to update to a new commit so do not update the format
+# without updating the renovate config, see .github/renovate.json5.
+gitreporef="06c3faf27826e17d6ea051ad023ba38879593e1b"
+gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
+curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
 
 echo " Building image locally"
 
@@ -36,12 +38,32 @@ mkdir -p $OUTDIR
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-pushd $OUTDIR && sh $SRCDIR/build-podman-machine-os-disks/build-podman-machine-os-disks.sh "${PWD}/${DISK_IMAGE_NAME}"
+pushd $OUTDIR && sh $SRCDIR/custom-coreos-disk-images.sh \
+  --platforms applehv,hyperv,qemu \
+  --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
+  --osname fedora-coreos \
+  --imgref "ostree-remote-registry:fedora:$FULL_IMAGE_NAME" \
+  --metal-image-size 6144 \
+  --extra-kargs='ostree.prepare-root.composefs=0'
+
+
+declare -A COREOS_PLATFORM_SUFFIX=(
+    ['applehv']='raw'
+    ['hyperv']='vhdx'
+    ['qemu']='qcow2'
+)
 
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
-for DISK in "${DISK_FLAVORS_W_SUFFIX[@]}"; do
-  zstd --rm -T0 -14 "${DISK_IMAGE_NAME}.${CPU_ARCH}.${DISK}"
+for hypervisor in "${!COREOS_PLATFORM_SUFFIX[@]}"; do
+  # Rename the file to our preferred format
+  extension="${COREOS_PLATFORM_SUFFIX[$hypervisor]}"
+  filename="${DISK_IMAGE_NAME}-${hypervisor}.${CPU_ARCH}.${extension}"
+  newfilename="${DISK_IMAGE_NAME}.${CPU_ARCH}.${hypervisor}.${extension}"
+  mv "$filename" "$newfilename"
+
+  # Compress the file
+  zstd --rm -T0 -14 "$newfilename"
 done
 
 popd
