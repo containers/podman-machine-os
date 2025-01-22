@@ -58,7 +58,8 @@ RUN if [[ ${PODMAN_RPM_TYPE} == "dev" ]]; then \
 # Install subscription-manager and enable service to refresh certificates
 # Install qemu-user-static for bootc
 # Install gvisor-tap-vsock-gvforwarder for hyperv
-RUN rpm-ostree install subscription-manager gvisor-tap-vsock-gvforwarder qemu-user-static && rm -fr /var/cache
+# Install ansible for post-install configuration
+RUN rpm-ostree install subscription-manager gvisor-tap-vsock-gvforwarder qemu-user-static ansible-core && rm -fr /var/cache
 
 RUN systemctl enable rhsmcertd.service
 # Patching qemu backed binfmt configurations to use the actual executable's permissions and not the interpreter's
