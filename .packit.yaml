@@ -5,7 +5,7 @@
 jobs:
   # All tests specified in the `/plans/` subdir
   - job: tests
-    trigger: pull_request
+    trigger: ignore # We use cirrus for now
     skip_build: true
     notifications:
       failure_comment:

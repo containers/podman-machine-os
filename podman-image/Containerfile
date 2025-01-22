@@ -1,7 +1,4 @@
-# FIXME: Hard code digest for now, the stable branch was just switch to f41
-# which uses composefs and that does not allow us to create root directories in /.
-# Switch tag back to stable once we have have a fix for that.
-FROM quay.io/fedora/fedora-coreos@sha256:868e4df83490c7064b9e22f1dcb39fe459dad2fdccca94cb9fb295e05760f6b6
+FROM quay.io/fedora/fedora-coreos:stable
 
 ARG PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE}
 ARG PODMAN_VERSION=${PODMAN_VERSION}
@@ -14,12 +11,14 @@ ARG PODMAN_RPM_URL="https://kojipkgs.fedoraproject.org/packages/podman/${PODMAN_
 RUN mkdir -p /etc/containers/registries.conf.d && \
     mkdir -p /etc/systemd/system.conf.d && \
     mkdir -p /etc/environment.d && \
-    mkdir -p /etc/containers/registries.conf.d
+    mkdir -p /etc/containers/registries.conf.d && \
+    mkdir -p /etc/ssh/sshd_config.d
 
 COPY  50-podman-makestep.conf /etc/chrony.d/50-podman-makestep.conf
 COPY  docker-host.sh /etc/profile.d/docker-host.sh
 COPY  999-podman-machine.conf /etc/containers/registries.conf.d/999-podman-machine.conf
 COPY  10-inotify-instances.conf /etc/sysctl.d/10-inotify-instances.conf
+COPY  99-podman-sshd.conf /etc/ssh/sshd_config.d/99-podman-sshd.conf
 
 ## Enables automatic login on the console;
 ## there's no security concerns here, and this makes debugging easier.
