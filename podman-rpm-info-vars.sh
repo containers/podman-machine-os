@@ -7,5 +7,5 @@ export PODMAN_RPM_TYPE="release"
 # PODMAN_VERSION is used for fetching the right rpm when PODMAN_RPM_TYPE is set to release.
 # However it is always used to derive the machine-os image tag (x.y) so this must be valid
 # at any given time.
-export PODMAN_VERSION="5.3.1"
+export PODMAN_VERSION="5.3.2"
 export PODMAN_RPM_RELEASE="1"
