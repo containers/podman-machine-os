@@ -99,10 +99,10 @@ verify_macos_task:
     depends_on:
         - image_build
     persistent_worker: &mac_pw
-    labels:
-        os: darwin
-        arch: arm64
-        purpose: prod
+        labels:
+            os: darwin
+            arch: arm64
+            purpose: prod
     env: &mac_env
         ARCH: "aarch64"
         CIRRUS_SHELL: "/bin/bash"  # sh is the default
