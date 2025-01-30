@@ -87,10 +87,17 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(session).To(Exit(0))
 
+		// https://github.com/containers/podman-machine-os/issues/18
 		sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "systemctl", "is-active", "systemd-resolved.service"}).run()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(sshSession).To(Exit(3))
 		Expect(sshSession.outputToString()).To(Equal("inactive"))
+
+		// https://github.com/containers/podman/issues/25153
+		sshSession, err = mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "lsmod"}).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(sshSession).To(Exit(0))
+		Expect(sshSession.outputToString()).To(And(ContainSubstring("ip_tables"), ContainSubstring("ip6_tables")))
 
 		// set by podman-rpm-info-vars.sh
 		if version := os.Getenv("PODMAN_VERSION"); version != "" {

@@ -19,6 +19,7 @@ COPY  docker-host.sh /etc/profile.d/docker-host.sh
 COPY  999-podman-machine.conf /etc/containers/registries.conf.d/999-podman-machine.conf
 COPY  10-inotify-instances.conf /etc/sysctl.d/10-inotify-instances.conf
 COPY  99-podman-sshd.conf /etc/ssh/sshd_config.d/99-podman-sshd.conf
+COPY  podman-iptables.conf /etc/modules-load.d/podman-iptables.conf
 
 ## Enables automatic login on the console;
 ## there's no security concerns here, and this makes debugging easier.
