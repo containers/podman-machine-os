@@ -6,13 +6,6 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-# Freeze on specific commit to increase stability.
-# Renovate is configured to update to a new commit so do not update the format
-# without updating the renovate config, see .github/renovate.json5.
-gitreporef="76773dd5de01ae2095ddfc5fd4c58e444516cbf9"
-gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
-curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
-
 echo " Building image locally"
 
 # Validate podman RPM type var, see the Containerfile for the pull logic.
@@ -27,10 +20,7 @@ esac
 # to the build process.
 podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/podman-image \
     --build-arg PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE} \
-    --build-arg PODMAN_VERSION=${PODMAN_VERSION} \
-    --build-arg PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE} \
-    --build-arg FEDORA_RELEASE=$(rpm --eval '%{?fedora}') \
-    --build-arg ARCH=$(uname -m)
+    --build-arg PODMAN_PR_NUM=${PODMAN_PR_NUM}
 
 echo "Saving image from image store to filesystem"
 
