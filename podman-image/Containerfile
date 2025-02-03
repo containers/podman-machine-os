@@ -48,13 +48,14 @@ RUN if [[ ${PODMAN_RPM_TYPE} == "dev" ]]; then \
         --from repo="copr:copr.fedorainfracloud.org:rhcontainerbot:podman-next" \
         aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm; \
     else \
-        rm /etc/yum.repos.d/rhcontainerbot*.repo /etc/pki/rpm-gpg/rhcontainerbot*.gpg; \
+        rm /etc/yum.repos.d/rhcontainerbot*.repo /etc/pki/rpm-gpg/rhcontainerbot*.gpg && \
         if [[ $(rpm -q podman) != "podman-${PODMAN_VERSION}-${PODMAN_RPM_RELEASE}.fc${FEDORA_RELEASE}.${ARCH}" ]]; then \
             rpm-ostree override replace ${PODMAN_RPM_URL}; \
-        fi; \
-    fi; \
-    rpm-ostree override remove moby-engine containerd runc; \
-    rm -fr /var/cache && ostree container commit
+        fi \
+    fi && \
+    rpm-ostree override remove moby-engine containerd runc && \
+    rm -fr /var/cache && \
+    ostree container commit
 
 # Install subscription-manager and enable service to refresh certificates
 # Install qemu-user-static for bootc
