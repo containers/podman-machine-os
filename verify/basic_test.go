@@ -101,17 +101,27 @@ var _ = Describe("run basic podman commands", func() {
 
 		// set by podman-rpm-info-vars.sh
 		if version := os.Getenv("PODMAN_VERSION"); version != "" {
+			// When we have an rc package fedora uses "~rc" while the upstream version is "-rc".
+			// As such we have to replace it so we can match the real version below.
+			version = strings.ReplaceAll(version, "~", "-")
 			// version is x.y.z while image uses x.y, remove .z so we can match
+			imageVersion := version
 			index := strings.LastIndex(version, ".")
 			if index >= 0 {
-				version = version[:index]
+				imageVersion = version[:index]
 			}
 			// verify the rpm-ostree image inside uses the proper podman image reference
 			sshSession, err = mb.setCmd([]string{"machine", "ssh", machineName, "sudo rpm-ostree status --json | jq -r '.deployments[0].\"container-image-reference\"'"}).run()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(sshSession).To(Exit(0))
 			Expect(sshSession.outputToString()).
-				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + version))
+				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + imageVersion))
+
+			// check the server version so we know we have the right version installed in the VM
+			server, err := mb.setCmd([]string{"version", "--format", "{{.Server.Version}}"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(server).To(Exit(0))
+			Expect(server.outputToString()).To(Equal(version))
 		}
 	})
 
