@@ -1,6 +1,9 @@
 package verify
 
 import (
+	"os"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gexec"
@@ -97,23 +100,32 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(sshSession.outputToString()).To(And(ContainSubstring("ip_tables"), ContainSubstring("ip6_tables")))
 
 		// set by podman-rpm-info-vars.sh
+		if version := os.Getenv("PODMAN_VERSION"); version != "" {
+			// When we have an rc package fedora uses "~rc" while the upstream version is "-rc".
+			// As such we have to replace it so we can match the real version below.
+			version = strings.ReplaceAll(version, "~", "-")
+			// version is x.y.z while image uses x.y, remove .z so we can match
+			imageVersion := version
+			index := strings.LastIndex(version, ".")
+			if index >= 0 {
+				imageVersion = version[:index]
+			}
+			// verify the rpm-ostree image inside uses the proper podman image reference
+			sshSession, err = mb.setCmd([]string{"machine", "ssh", machineName, "sudo rpm-ostree status --json | jq -r '.deployments[0].\"container-image-reference\"'"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(0))
+			Expect(sshSession.outputToString()).
+				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + imageVersion))
 
-		// TODO: there is no 5.5 in the copr yet as podman main would need to be bumped.
-		// But in order to do that it needs working machine images, catch-22.
-		// Skip this check for now, we should consider only doing this check on release branches.
-		// if version := os.Getenv("PODMAN_VERSION"); version != "" {
-		// 	// version is x.y.z while image uses x.y, remove .z so we can match
-		// 	index := strings.LastIndex(version, ".")
-		// 	if index >= 0 {
-		// 		version = version[:index]
-		// 	}
-		// 	// verify the rpm-ostree image inside uses the proper podman image reference
-		// 	sshSession, err = mb.setCmd([]string{"machine", "ssh", machineName, "sudo rpm-ostree status --json | jq -r '.deployments[0].\"container-image-reference\"'"}).run()
-		// 	Expect(err).ToNot(HaveOccurred())
-		// 	Expect(sshSession).To(Exit(0))
-		// 	Expect(sshSession.outputToString()).
-		// 		To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + version))
-		// }
+			// TODO: there is no 5.5 in the copr yet as podman main would need to be bumped.
+			// But in order to do that it needs working machine images, catch-22.
+			// Skip this check for now, we should consider only doing this check on release branches.
+			// check the server version so we know we have the right version installed in the VM
+			// server, err := mb.setCmd([]string{"version", "--format", "{{.Server.Version}}"}).run()
+			// Expect(err).ToNot(HaveOccurred())
+			// Expect(server).To(Exit(0))
+			// Expect(server.outputToString()).To(Equal(version))
+		}
 	})
 
 	It("machine stop/start cycle", func() {
