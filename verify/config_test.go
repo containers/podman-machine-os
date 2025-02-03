@@ -3,6 +3,7 @@ package verify
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"os/exec"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containers/storage/pkg/stringid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
@@ -173,7 +173,13 @@ func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration, wa
 
 // randomString returns a string of given length composed of random characters
 func randomString() string {
-	return stringid.GenerateRandomID()[0:12]
+	length := 12
+	b := make([]byte, length)
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	for i := range b {
+		b[i] = charset[rand.IntN(len(charset))]
+	}
+	return string(b)
 }
 
 type ValidJSONMatcher struct {

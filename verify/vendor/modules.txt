@@ -1,7 +1,3 @@
-# github.com/containers/storage v1.56.1
-## explicit; go 1.22.0
-github.com/containers/storage/pkg/regexp
-github.com/containers/storage/pkg/stringid
 # github.com/go-logr/logr v1.4.2
 ## explicit; go 1.18
 github.com/go-logr/logr
@@ -56,6 +52,8 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
+# github.com/stretchr/testify v1.9.0
+## explicit; go 1.17
 # golang.org/x/net v0.33.0
 ## explicit; go 1.18
 golang.org/x/net/html
