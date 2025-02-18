@@ -15,22 +15,18 @@ curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
 
 echo " Building image locally"
 
-# Validate podman RPM type var, see the Containerfile for the pull logic.
-case "${PODMAN_RPM_TYPE}" in
-  "dev") echo "Will install podman from the podman-next copr, the podman version is ignored" ;;
-  "release") ;;
-  *) echo 'PODMAN_RPM_TYPE must be set to "dev" or "release"' 1>&2; exit 1
+# Validate PODMAN_PR_NUM var, see the Containerfile for the pull logic.
+case "${PODMAN_PR_NUM}" in
+  '') echo "Will install podman from the podman-next copr, the podman version is ignored" ;;
+  [0-9]*) ;;
+  *) echo 'PODMAN_PR_NUM must be empty or set to a valid PR number' 1>&2; exit 1;;
 esac
 
-# See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_RPM_TYPE is
-# "dev", the rpm version, release and fedora release values are of no concern
+# See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_PR_NUM is
+# empty, the rpm version, release and fedora release values are of no concern
 # to the build process.
 podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/podman-image \
-    --build-arg PODMAN_RPM_TYPE=${PODMAN_RPM_TYPE} \
-    --build-arg PODMAN_VERSION=${PODMAN_VERSION} \
-    --build-arg PODMAN_RPM_RELEASE=${PODMAN_RPM_RELEASE} \
-    --build-arg FEDORA_RELEASE=$(rpm --eval '%{?fedora}') \
-    --build-arg ARCH=$(uname -m)
+    --build-arg PODMAN_PR_NUM=${PODMAN_PR_NUM}
 
 echo "Saving image from image store to filesystem"
 
