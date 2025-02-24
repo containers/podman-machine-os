@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora-coreos:stable
+FROM quay.io/fedora/fedora-coreos:rawhide
 
 ARG PODMAN_PR_NUM=${PODMAN_PR_NUM}
 
