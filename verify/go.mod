@@ -3,7 +3,7 @@ module github.com/containers/podman-machine-os
 go 1.23.0
 
 require (
-	github.com/onsi/ginkgo/v2 v2.23.0
+	github.com/onsi/ginkgo/v2 v2.23.1
 	github.com/onsi/gomega v1.36.2
 )
 
