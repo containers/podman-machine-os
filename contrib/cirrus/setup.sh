@@ -2,6 +2,8 @@
 
 set -xeo pipefail
 
+dnf up -y osbuild
+
 # Build process must run with selinux disabled?!
 setenforce 0
 
