@@ -1,6 +1,6 @@
 # The next version 41.20250302.3.2 started shipping kernel 6.13 and that
 # breaks rosetta. Pin the version for now to avoid releasing broken images.
-FROM quay.io/fedora/fedora-coreos:41.20250215.3.0
+FROM quay.io/fedora/fedora-coreos:41.20250315.20.2
 
 ARG PODMAN_PR_NUM=${PODMAN_PR_NUM}
 
