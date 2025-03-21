@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("run basic podman commands", func() {
 	It("Basic ops", func() {
-		imgName := "docker.io/library/alpine"
+		imgName := "quay.io/libpod/testimage:20241011"
 		machineName, session, err := mb.initNowWithName()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(session).To(Exit(0))
@@ -23,7 +23,7 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(pullSession).To(Exit(0))
 
 		// Check Images
-		checkCmd := []string{"images", "--format", "{{.Repository}}"}
+		checkCmd := []string{"images", "--format", "{{.Repository}}:{{.Tag}}"}
 		checkImages, err := mb.setCmd(checkCmd).run()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(checkImages).To(Exit(0))
