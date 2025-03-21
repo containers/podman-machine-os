@@ -2,6 +2,7 @@ package verify
 
 import (
 	"os"
+	"runtime"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -68,6 +69,25 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(doubleCheckCmdSession).To(Exit(0))
 		Expect(len(doubleCheckCmdSession.outputToStringSlice())).To(Equal(0))
+
+		// Test emulation so we know it always works, we had a kernel update
+		// broke rosetta on applehv so we like to catch that the next time.
+		var expectedArch string
+		var goArch string
+		switch runtime.GOARCH {
+		case "amd64":
+			goArch = "arm64"
+			expectedArch = "aarch64"
+		case "arm64":
+			goArch = "amd64"
+			expectedArch = "x86_64"
+		}
+		// quiet to not get the pull output
+		archCommand := []string{"run", "--quiet", "--platform", "linux/" + goArch, imgName, "arch"}
+		archSession, err := mb.setCmd(archCommand).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(archSession).To(Exit(0))
+		Expect(archSession.outputToString()).To(Equal(expectedArch))
 
 		// Stop machine
 		stopMachineCmd := []string{"machine", "stop", machineName}
