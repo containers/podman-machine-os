@@ -9,7 +9,7 @@ env:
     FEDORA_AARCH64_NAME: "${FEDORA_NAME}-aarch64"
 
     # Image identifiers
-    IMAGE_SUFFIX: "c20250131t121915z-f41f40d13"
+    IMAGE_SUFFIX: "c20250324t111922z-f41f40d13"
 
     # EC2 images
     FEDORA_AMI: "fedora-aws-${IMAGE_SUFFIX}"
