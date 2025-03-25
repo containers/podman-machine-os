@@ -22,11 +22,14 @@ case "${PODMAN_PR_NUM}" in
   *) echo 'PODMAN_PR_NUM must be empty or set to a valid PR number' 1>&2; exit 1;;
 esac
 
-# See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_PR_NUM is
-# empty, the rpm version, release and fedora release values are of no concern
-# to the build process.
+# See podman-rpm-info-vars.sh PODMAN_PR_NUM value. If PODMAN_PR_NUM is
+# empty, other variables are of effectively no concern to the build process.
+dnf -y install python3-fedora-distro-aliases
+FEDORA_LATEST_STABLE=$(resolve-fedora-aliases --output-type branch fedora-latest-stable)
+
 podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/podman-image \
-    --build-arg PODMAN_PR_NUM=${PODMAN_PR_NUM}
+    --build-arg PODMAN_PR_NUM=${PODMAN_PR_NUM} \
+    --build-arg FEDORA_LATEST_STABLE=${FEDORA_LATEST_STABLE}
 
 echo "Saving image from image store to filesystem"
 

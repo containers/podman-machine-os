@@ -3,6 +3,7 @@
 FROM quay.io/fedora/fedora-coreos:41.20250215.3.0
 
 ARG PODMAN_PR_NUM=${PODMAN_PR_NUM}
+ARG FEDORA_LATEST_STABLE=${FEDORA_LATEST_STABLE}
 
 # Make required directories
 RUN mkdir -p /etc/containers/registries.conf.d && \
@@ -43,6 +44,17 @@ RUN if [[ ${PODMAN_PR_NUM} == "" ]]; then \
         --from repo="copr:copr.fedorainfracloud.org:rhcontainerbot:podman-next" \
         aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm; \
     else \
+        dnf -y install koji python3-koji-cli-plugins && \
+        # TODO: container-selinux installation from local rpm conflicts over selinux-policy.
+        koji download-build --latestfrom=${FEDORA_LATEST_STABLE}-updates-testing -a $(arch) crun || true &&\
+        for pkg in aardvark-dns containers-common netavark; \
+            do for tag in $(koji list-sidetags --user=packit | grep ${FEDORA_LATEST_STABLE}); \
+                do koji download-build --latestfrom=$tag -a $(arch) -a noarch $pkg || true; \
+            done; \
+        done && \
+        rm -f crun-krun*.rpm crun-wasm*.rpm && \
+        rpm-ostree override replace -C --experimental --freeze $(ls $(pwd)/*.rpm) || true && \
+        dnf -y remove koji python3-koji-cli-plugins && \
         curl -o /etc/yum.repos.d/podman-release-copr.repo https://copr.fedorainfracloud.org/coprs/packit/containers-podman-${PODMAN_PR_NUM}/repo/fedora-rawhide/packit-containers-podman-${PODMAN_PR_NUM}-fedora-rawhide.repo && \
         curl -o /etc/pki/rpm-gpg/podman-release-copr.gpg https://download.copr.fedorainfracloud.org/results/packit/containers-podman-${PODMAN_PR_NUM}/pubkey.gpg && \
         rpm-ostree override replace --experimental --freeze \
