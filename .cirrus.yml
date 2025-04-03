@@ -27,8 +27,7 @@ env:
     # Vars used for the macos and windows testing
     MACHINE_IMAGE_BASE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/image_build/image/"
     # podman version used by windows/macos verify suite
-    # 5.4.1 is missing the windows installer right now
-    PODMAN_INSTALL_VERSION: 5.4.0
+    PODMAN_INSTALL_VERSION: 5.4.2
 
 gcp_credentials: ENCRYPTED[b06ef3490b73469d9da1402568d6f3e46a852955a4ab0807689d50352ecf2852cb5903e8d3b7603eaab9d1c7c7d851a5]
 
