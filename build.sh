@@ -25,16 +25,16 @@ esac
 # See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_PR_NUM is
 # empty, the rpm version, release and fedora release values are of no concern
 # to the build process.
-podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/podman-image \
-    --build-arg PODMAN_PR_NUM=${PODMAN_PR_NUM}
+podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile "${PWD}"/podman-image \
+    --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}"
 
 echo "Saving image from image store to filesystem"
 
-mkdir -p $OUTDIR
+mkdir -p "$OUTDIR"
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-pushd $OUTDIR && sh $SRCDIR/custom-coreos-disk-images.sh \
+pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images.sh \
   --platforms applehv,hyperv,qemu \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
