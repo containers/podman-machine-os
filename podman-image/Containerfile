@@ -1,8 +1,8 @@
-# The next version 41.20250302.3.2 started shipping kernel 6.13 and that
-# breaks rosetta. Pin the version for now to avoid releasing broken images.
-FROM quay.io/fedora/fedora-coreos:41.20250215.3.0
+ARG FCOS_BASE_IMAGE=${FCOS_BASE_IMAGE}
+FROM ${FCOS_BASE_IMAGE}
 
 ARG PODMAN_PR_NUM=${PODMAN_PR_NUM}
+ARG FEDORA_VERSION=${FEDORA_VERSION}
 
 # Make required directories
 RUN mkdir -p /etc/containers/registries.conf.d && \
@@ -43,6 +43,9 @@ RUN if [[ ${PODMAN_PR_NUM} == "" ]]; then \
         --from repo="copr:copr.fedorainfracloud.org:rhcontainerbot:podman-next" \
         aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm; \
     else \
+        shopt -s nullglob && \
+        FILE="/var/tmp/rpms/*.rpm" && \
+        if [[ -n $(echo $FILE) ]]; then dnf update -y --best --allowerasing $FILE; fi && \
         curl -o /etc/yum.repos.d/podman-release-copr.repo https://copr.fedorainfracloud.org/coprs/packit/containers-podman-${PODMAN_PR_NUM}/repo/fedora-rawhide/packit-containers-podman-${PODMAN_PR_NUM}-fedora-rawhide.repo && \
         curl -o /etc/pki/rpm-gpg/podman-release-copr.gpg https://download.copr.fedorainfracloud.org/results/packit/containers-podman-${PODMAN_PR_NUM}/pubkey.gpg && \
         rpm-ostree override replace --experimental --freeze \

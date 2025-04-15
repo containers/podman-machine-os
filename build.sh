@@ -22,19 +22,57 @@ case "${PODMAN_PR_NUM}" in
   *) echo 'PODMAN_PR_NUM must be empty or set to a valid PR number' 1>&2; exit 1;;
 esac
 
+# koji tags prepend "f" to the release (rpm --eval)
+FEDORA_VERSION="f"$(podman run --rm "$FCOS_BASE_IMAGE" rpm --eval '%{?fedora}')
+export FEDORA_VERSION
+
+# Don't fail if koji download-build can't find any rpms
+set +e
+if [[ ${PODMAN_PR_NUM} != "" ]]; then
+    mkdir -p ./rpms
+    pushd ./rpms
+    for pkg in container-selinux crun;
+    do
+        for tag in "${FEDORA_VERSION}"-updates-candidate "${FEDORA_VERSION}"-updates-testing "${FEDORA_VERSION}"-updates-testing-pending;
+        do
+            koji download-build --latestfrom="$tag" -a "$(arch)" -a noarch "$pkg"
+            if [[ $? -eq 1 ]]; then
+                echo "Continuing..."
+                continue
+            fi
+        done
+    done
+    for pkg in aardvark-dns containers-common netavark;
+    do
+        for tag in $(koji list-sidetags --user=packit | grep "${FEDORA_VERSION}")
+        do
+            koji download-build --latestfrom="$tag" -a "$(arch)" -a noarch "$pkg"
+            if [[ $? -eq 1 ]]; then
+                echo "Continuing..."
+                continue
+            fi
+        done
+    done
+    rm -f crun-krun*.rpm crun-wasm*.rpm
+    popd
+fi
+set -e
+
 # See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_PR_NUM is
 # empty, the rpm version, release and fedora release values are of no concern
 # to the build process.
-podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile ${PWD}/podman-image \
-    --build-arg PODMAN_PR_NUM=${PODMAN_PR_NUM}
+podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile "${PWD}"/podman-image \
+    --build-arg FCOS_BASE_IMAGE="${FCOS_BASE_IMAGE}" \
+    --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}" \
+    --build-arg FEDORA_VERSION="${FEDORA_VERSION}"
 
 echo "Saving image from image store to filesystem"
 
-mkdir -p $OUTDIR
+mkdir -p "$OUTDIR"
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-pushd $OUTDIR && sh $SRCDIR/custom-coreos-disk-images.sh \
+pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images.sh \
   --platforms applehv,hyperv,qemu \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
