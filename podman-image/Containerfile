@@ -51,18 +51,24 @@ RUN if [[ ${PODMAN_PR_NUM} == "" ]]; then \
         rpm-ostree override replace --experimental --freeze \
         --from repo="copr:copr.fedorainfracloud.org:packit:containers-podman-${PODMAN_PR_NUM}" \
         podman; \
-    fi && \
-    rpm-ostree override remove moby-engine containerd runc && \
-    rm -fr /var/cache && \
-    ostree container commit
+    fi
 
 # Install subscription-manager and enable service to refresh certificates
 # Install qemu-user-static for bootc
 # Install gvisor-tap-vsock-gvforwarder for hyperv
+# Install device-mapper (this satisfies the deps for qemu-user-static
 # Install ansible for post-install configuration
-RUN rpm-ostree install subscription-manager gvisor-tap-vsock-gvforwarder qemu-user-static ansible-core && \
+# Remove unwanted packages
+# Remove man pages (man binary is not present)
+RUN dnf install -y --setopt=install_weak_deps=false subscription-manager device-mapper qemu-user-static-aarch64 qemu-user-static-x86
+RUN dnf install -y subscription-manager gvisor-tap-vsock-gvforwarder ansible-core
+
+RUN dnf remove -y moby-engine containerd runc toolbox qed-firmware docker-cli && \
     rm -fr /var/cache && \
-    ostree container commit
+    dnf -y clean all && \
+    ostree container commit && \
+    rm -fr /usr/share/man
+
 
 RUN systemctl enable rhsmcertd.service
 # Patching qemu backed binfmt configurations to use the actual executable's permissions and not the interpreter's
