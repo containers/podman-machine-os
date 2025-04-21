@@ -1,0 +1,114 @@
+name: Release
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to build and upload (e.g. "v9.8.7")'
+        required: true
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Determine Version
+      id: getversion
+      run: |
+        if [[ -z "${{ inputs.version }}" ]]
+        then
+              VERSION=${{ github.ref_name }}
+        else
+              VERSION=${{ inputs.version }}
+        fi
+        if ! grep -Eq 'v[0-9]+(\.[0-9]+(\.[0-9]+(-.+)?)?)?$' <<<"$VERSION"
+          then
+            echo "Unable to parse release version '$VERSION' from github event JSON, or workflow 'version' input."
+            exit 1
+          fi
+
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "::notice::releasing $VERSION"
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.getversion.outputs.version }}
+        token: ${{secrets.PODMANBOT_TOKEN}}
+    - name: Wait for images
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        retries=180
+        retry_interval=15
+
+        for n in $(seq 1 $retries); do
+          gh api \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/${{ github.repository }}/commits/${{ steps.getversion.outputs.version }}/check-runs \
+          > runs.json
+
+          status=$(jq --raw-output '.check_runs[] | select(.name==""Total Success"").status' runs.json)
+          conclusion=$(jq --raw-output '.check_runs[] | select(.name==""Total Success"").conclusion' runs.json)
+          printf "Retry number %s\n" $n
+
+          if [[ "$status" == "completed" ]] && [[ "$conclusion" == "success" ]]; then
+            echo "success"
+            exit 0
+          elif [[ "$status" == "completed" ]] && [[ "$conclusion" != "success" ]]; then
+            echo "::error:: Build did not succeed: $conclusion"
+            exit 1
+          fi
+          sleep $retry_interval
+        done
+
+        echo "::error:: Timeout waiting for build!"
+        exit 1
+
+    - name: Get images
+      run: |
+        function get_images {
+                  arch=$1
+                  taskid=$2
+
+                  baseurl=https://api.cirrus-ci.com/v1/artifact/task
+                  for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst tar; do
+                        name="podman-machine.$arch.$end"
+                        echo "$baseurl/$taskid/$name"
+                        curl --retry 5 --retry-delay 8 --fail --location -O --output-dir artifacts --url "$baseurl/$taskid/image/$name"
+                  done
+                }
+
+        mkdir artifacts
+
+        x86taskid=$(jq --raw-output '.check_runs[] | select(.name=="Image Build x86_64").external_id' runs.json)
+        aarchtaskid=$(jq --raw-output '.check_runs[] | select(.name=="Image Build aarch64").external_id' runs.json)
+
+        get_images x86_64 $x86taskid
+        get_images aarch64 $aarchtaskid
+
+        pushd artifacts
+        sha256sum * > shasums
+        popd
+
+    - name: Mark podman PR as ready
+      env:
+          GH_TOKEN: ${{ secrets.PODMANBOT_TOKEN }}
+      run: |
+          pr=$(sed -n '/^export PODMAN_PR_NUM/s/^[^"]*"\([^"]*\)"$/\1/p' podman-rpm-info-vars.sh)
+          if [[ $pr != "" ]]; then
+            gh pr edit --remove-label do-not-merge/wait-machine-os-build  https://github.com/containers/podman/pull/$pr
+          fi
+
+    - name: Create release
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create ${{ steps.getversion.outputs.version }} \
+            -t ${{ steps.getversion.outputs.version }} \
+            --notes "${{ steps.getversion.outputs.version }} release images" \
+            --verify-tag \
+            artifacts/*

@@ -146,8 +146,8 @@ image_push_task:
     execution_lock: $CIRRUS_BRANCH
     # Less likely the task is canceled.
     stateful: true
-    # Only push new images when not run on a PR.
-    only_if: $CIRRUS_PR == ""
+    # Only push new images on tags or on commits to main
+    only_if: $CIRRUS_TAG != '' || ($CIRRUS_BRANCH == 'main' && $CIRRUS_PR == "")
     depends_on:
         - verify_windows
         - verify_macos
