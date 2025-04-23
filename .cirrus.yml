@@ -139,15 +139,15 @@ verify_macos_task:
     always:
         task_cleanup_script: *mac_cleanup
 
-image_push_task:
-    name: "Image Push"
-    alias: "image_push"
+publish_images_task:
+    name: "Publish Images"
+    alias: "publish_images"
     # Make sure that there are not two push running at the same time.
     execution_lock: $CIRRUS_BRANCH
     # Less likely the task is canceled.
     stateful: true
-    # Only push new images when not run on a PR.
-    only_if: $CIRRUS_PR == ""
+    # Only push new images on tags or on commits to main
+    only_if: $CIRRUS_TAG != '' || ($CIRRUS_BRANCH == 'main' && $CIRRUS_PR == "")
     depends_on:
         - verify_windows
         - verify_macos
@@ -162,8 +162,14 @@ image_push_task:
         EC2_INST_TYPE: "m5.large"
         QUAY_USER: ENCRYPTED[53d23fbd39a3b8b0daf015edac296b56964da0b523767f79d3a8131a4871523b90c5a7554c91172c1ca0066e492853e3]
         QUAY_PASSWORD: ENCRYPTED[3cfabb0f7fa6a36dc6af433f5a0291d87b38402c922b662e9647931a635f20ca33401aa91b29745b7af252538406a292]
-
-    main_script: |
+        RELEASE_TOKEN: ENCRYPTED[cd84d616ad5bf178b176b779134b80117426aa73c34d411640207c5bc2ac65762ca8913db12df0512c71e17b4bc4d98e]
+        LABEL_TOKEN: ENCRYPTED[c644214831fa15c36a803271a8df9a3829a54061c65fbe5f9ff3ef19358f792957035f572caa3ce0bf0179a4321793e2]
+    install_script: |
+        # TODO: remove install once gh is in the image
+        if [[ $CIRRUS_TAG != '' ]]; then
+            sudo dnf install -y gh
+        fi
+    push_script: |
         mkdir $OUTDIR
         for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst tar; do
             for arch in x86_64 aarch64; do
@@ -176,13 +182,36 @@ image_push_task:
         podman images
         podman login -u "$QUAY_USER" --password-stdin quay.io <<<"$QUAY_PASSWORD"
         time podman manifest push --all "$FULL_IMAGE_NAME"
+    release_script: |
+        if [[ $CIRRUS_TAG != '' ]]; then
+            pushd $OUTDIR
+            sha256sum * > shasums
+            popd
+
+            gh auth login --with-token <<<"$RELEASE_TOKEN"
+            gh release create $CIRRUS_TAG \
+                -t $CIRRUS_TAG \
+                --notes "$CIRRUS_TAG release images" \
+                --verify-tag \
+                $OUTDIR/*
+            gh auth logout
+        fi
+    podman_label_script: |
+        if [[ $CIRRUS_TAG != '' ]]; then
+            pr=$(sed -n '/^export PODMAN_PR_NUM/s/^[^"]*"\([^"]*\)"$/\1/p' podman-rpm-info-vars.sh)
+            if [[ $pr != "" ]]; then
+                gh auth login --with-token <<<"$LABEL_TOKEN"
+                gh pr edit --remove-label do-not-merge/wait-machine-os-build  https://github.com/containers/podman/pull/$pr
+                gh auth logout
+            fi
+        fi
 
 test_task:
     name: "Total Success"
     alias: success
     depends_on:
         - image_build
-        - image_push
+        - publish_images
         - verify_windows
         - verify_macos
     container:
