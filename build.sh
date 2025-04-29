@@ -66,6 +66,9 @@ podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile "${PWD}"
     --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}" \
     --build-arg FEDORA_VERSION="${FEDORA_VERSION}"
 
+# Use rpm-ostree rechunk to remove unwanted data/packages and save space where can
+rpm-ostree compose build-chunked-oci --bootc --from "${FULL_IMAGE_NAME_ARCH}" --output containers-storage:"${FULL_IMAGE_NAME_ARCH}"
+
 echo "Saving image from image store to filesystem"
 
 mkdir -p "$OUTDIR"
