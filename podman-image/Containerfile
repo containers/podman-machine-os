@@ -78,12 +78,14 @@ RUN systemctl disable coreos-platform-chrony-config.service && \
 # Disable the systemd resolver, the unit cannot be disabled/ or masked
 # https://fedoraproject.org/wiki/Changes/systemd-resolved#Fully_opting_out_of_systemd-resolved_use
 # https://github.com/containers/podman-machine-os/issues/18
-# We have to remove /etc/resolv.conf because that is a symlink to the systemd resolv dir which
+# We have to remove /etc/resolv.conf because that is a symlink to the systemd-resolved dir which
 # means NetworkManager will not populate it otherwise. To do that we use --network=none so podman
 # does not mount over it and we can remove and create a real inode on the rootfs.
-RUN --network=none mkdir -p /etc/systemd/system-preset && \
-    echo "disable systemd-resolved.service" >/etc/systemd/system-preset/20-systemd-resolved-disable.preset && \
-    rm -f /etc/resolv.conf && touch /etc/resolv.conf
+# We also remove all systemd-resolved content as the tmpfile.d shipped there will recreate the
+# symlink otherwise. While creating an empty file used to be good enough since
+# https://github.com/bootc-dev/bootc/pull/1167 that no longer works as it automatically removes
+# this empty file for other reasons. Removing the package is much more robust so we do that.
+RUN --network=none rm -vf /etc/resolv.conf && rpm -e systemd-resolved
 
 # For Rosetta
 # We should enable the service but for some reason the chnage is not
