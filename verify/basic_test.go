@@ -108,9 +108,10 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(session).To(Exit(0))
 
 		// https://github.com/containers/podman-machine-os/issues/18
+		// Note the service should not be installed as we removed the package at build time.
 		sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "systemctl", "is-active", "systemd-resolved.service"}).run()
 		Expect(err).ToNot(HaveOccurred())
-		Expect(sshSession).To(Exit(3))
+		Expect(sshSession).To(Exit(4))
 		Expect(sshSession.outputToString()).To(Equal("inactive"))
 
 		// https://github.com/containers/podman/issues/25153
