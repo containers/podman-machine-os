@@ -51,17 +51,21 @@ RUN if [[ ${PODMAN_PR_NUM} == "" ]]; then \
         rpm-ostree override replace --experimental --freeze \
         --from repo="copr:copr.fedorainfracloud.org:packit:containers-podman-${PODMAN_PR_NUM}" \
         podman; \
-    fi && \
-    rpm-ostree override remove moby-engine containerd runc && \
-    rm -fr /var/cache && \
-    ostree container commit
+    fi
 
 # Install subscription-manager and enable service to refresh certificates
 # Install qemu-user-static for bootc
 # Install gvisor-tap-vsock-gvforwarder for hyperv
+# Install device-mapper (this satisfies the deps for qemu-user-static
 # Install ansible for post-install configuration
-RUN rpm-ostree install subscription-manager gvisor-tap-vsock-gvforwarder qemu-user-static ansible-core && \
-    rm -fr /var/cache && \
+# Remove unwanted packages
+# Remove man pages (man binary is not present)
+RUN dnf install -y --setopt=install_weak_deps=false \
+    subscription-manager device-mapper qemu-user-static-aarch64 qemu-user-static-x86 && \
+    dnf install -y gvisor-tap-vsock-gvforwarder ansible-core && \
+    dnf remove -y moby-engine containerd runc toolbox qed-firmware docker-cli && \
+    rm -fr /var/cache /usr/share/man && \
+    dnf -y clean all && \
     ostree container commit
 
 RUN systemctl enable rhsmcertd.service
@@ -88,7 +92,7 @@ RUN systemctl disable coreos-platform-chrony-config.service && \
 RUN --network=none rm -vf /etc/resolv.conf && rpm -e systemd-resolved
 
 # For Rosetta
-# We should enable the service but for some reason the chnage is not
+# We should enable the service but for some reason the change is not
 # carried into the VM even if we do so here, so for now this must be
 # enabled via ignition by podman machine code:
 # https://github.com/containers/podman/pull/21670#discussion_r1585790802
