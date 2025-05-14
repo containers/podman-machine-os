@@ -50,7 +50,5 @@ FULL_IMAGE_NAME="${REPO}/${OCI_NAME}:${OCI_VERSION}"
 
 export FULL_IMAGE_NAME_ARCH="$FULL_IMAGE_NAME-${ARCH_TO_IMAGE_ARCH[$CPU_ARCH]}"
 
-# The next version 41.20250302.3.2 started shipping kernel 6.13 and that
-# breaks rosetta. Pin the version for now to avoid releasing broken images.
-FCOS_BASE_IMAGE="quay.io/fedora/fedora-coreos:41.20250215.3.0"
+FCOS_BASE_IMAGE="quay.io/fedora/fedora-coreos:next"
 export FCOS_BASE_IMAGE
