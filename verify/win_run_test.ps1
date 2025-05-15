@@ -1,11 +1,11 @@
 #!/usr/bin/env powershell
 
-# Small helper to avoid needing to write 'Check-Exit' after every
+# Small helper to avoid needing to write 'Test-Exit' after every
 # non-powershell instruction.  It simply prints then executes the _QUOTED_
-# argument followed by Check-Exit.
+# argument followed by Test-Exit.
 # N/B: Escape any nested quotes with back-tick ("`") characters.
 # WARNING: DO NOT use this with powershell builtins! It will not do what you expect!
-function Run-Command {
+function Invoke-Command {
     param (
         [string] $command
     )
@@ -25,7 +25,7 @@ function Run-Command {
         Invoke-Logformatter $unformattedLog
     }
 
-    Check-Exit 2 "'$command'" "$exitCode"
+    Test-Exit 2 "'$command'" "$exitCode"
 }
 
 # Non-powershell commands do not halt execution on error!  This helper
@@ -33,7 +33,7 @@ function Run-Command {
 # non-zero exit code.  Be careful not to use this for powershell commandlets
 # (builtins)!  They set '$?' to "True" (failed) or "False" success so calling
 # this would mask failures.  Rely on $ErrorActionPreference = 'Stop' instead.
-function Check-Exit {
+function Test-Exit {
     param (
         [int] $stackPos = 1,
         [string] $command = 'command',
@@ -57,4 +57,4 @@ if ($args.Count -lt 1) {
 $env:MACHINE_IMAGE_PATH=$args[0]
 
 # Run the tests
-Run-Command "ginkgo -v"
+Invoke-Command "ginkgo -v"
