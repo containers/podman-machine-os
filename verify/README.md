@@ -30,7 +30,7 @@ for the test script is as follows:
 
 You can also set the path to the disk image with an environment variable such as:
 
-`$ PODMAN_MACHINE_IMAGE=/path/to/disk/image sh run_test.sh`
+`$ MACHINE_IMAGE_PATH=/path/to/disk/image sh run_test.sh`
 
 #### MacOS
 On MacOS, **you will need to set the TMPDIR environment variable** to avoid a
