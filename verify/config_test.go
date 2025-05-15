@@ -148,7 +148,7 @@ func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
 		diskSize = m.diskSize
 	}
 	cmdLine := []string{"machine", "init", "--now", "--image", m.imagePath, "--disk-size", strconv.Itoa(int(diskSize)), machineName}
-	session, err := mb.setName(machineName).setCmd(cmdLine).run()
+	session, err := m.setName(machineName).setCmd(cmdLine).run()
 	return machineName, session, err
 
 }
