@@ -57,4 +57,5 @@ if ($args.Count -lt 1) {
 $env:MACHINE_IMAGE_PATH=$args[0]
 
 # Run the tests
-Invoke-Command "ginkgo -v"
+$remotetags = "remote exclude_graphdriver_btrfs containers_image_openpgp"
+Invoke-Command "ginkgo -v --tags `"$remotetags`""
