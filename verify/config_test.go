@@ -11,6 +11,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containers/podman/v5/pkg/machine/define"
+	"github.com/containers/podman/v5/pkg/machine/provider"
+	"github.com/containers/podman/v5/pkg/machine/vmconfigs"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
@@ -148,7 +151,7 @@ func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
 		diskSize = m.diskSize
 	}
 	cmdLine := []string{"machine", "init", "--now", "--image", m.imagePath, "--disk-size", strconv.Itoa(int(diskSize)), machineName}
-	session, err := mb.setName(machineName).setCmd(cmdLine).run()
+	session, err := m.setName(machineName).setCmd(cmdLine).run()
 	return machineName, session, err
 
 }
@@ -211,30 +214,26 @@ func (matcher *ValidJSONMatcher) NegatedFailureMessage(actual interface{}) (mess
 	return format.Message(actual, "to _not_ be valid JSON")
 }
 
-//func skipIfVmtype(vmType define.VMType, message string) {
-//	if isVmtype(vmType) {
-//		Skip(message)
-//	}
-//}
-//
-//func skipIfNotVmtype(vmType define.VMType, message string) {
-//	if !isVmtype(vmType) {
-//		Skip(message)
-//	}
-//}
-//
-//func skipIfWSL(message string) {
-//	skipIfVmtype(define.WSLVirt, message)
-//}
-//
-//func isVmtype(vmType define.VMType) bool {
-//	return testProvider.VMType() == vmType
-//}
-//
-//// isWSL is a simple wrapper to determine if the testprovider is WSL
-//func isWSL() bool {
-//	return isVmtype(define.WSLVirt)
-//}
+func skipIfVmtype(vmType define.VMType, message string) {
+	if isVmtype(vmType) {
+		Skip(message)
+	}
+}
+
+func skipIfNotVmtype(vmType define.VMType, message string) {
+	if !isVmtype(vmType) {
+		Skip(message)
+	}
+}
+
+var testProvider vmconfigs.VMProvider
+
+func isVmtype(vmType define.VMType) bool {
+	if testProvider == nil {
+		testProvider, err = provider.Get()
+	}
+	return testProvider.VMType() == vmType
+}
 
 // Only used on Windows
 //
