@@ -41,7 +41,7 @@ jobs:
                         '.[] | select(.name == "Total Success") | .status' \
                         "$ccirjson")
                   branch=$(jq --raw-output \
-                        '.[] | select(.name == "Total Success") | .branch' \
+                        '.[] | select(.name == "Total Success") | .build.branch' \
                         "$ccirjson")
 
                   if [[ -n "$prn" ]] && \
@@ -82,8 +82,7 @@ jobs:
                   message: "${{ steps.artifact_output.outputs.comment }}"
 
             # Send mail on build failures that do not happen on PRs so we know if something fails.
-            # TODO: switch to "!= 'COMPLETED'", for now like this so I can test it once post merge.
-            - if: steps.retro.outputs.is_pr == 'false' && steps.retro.outputs.status == 'COMPLETED'
+            - if: steps.retro.outputs.is_pr == 'false' && steps.retro.outputs.status != 'COMPLETED'
               name: Email on build failures for branches
               # Ref: https://github.com/dawidd6/action-send-mail
               uses: dawidd6/action-send-mail@v3.12.0
@@ -92,7 +91,7 @@ jobs:
                 server_port: 465
                 username: ${{secrets.ACTION_MAIL_USERNAME}}
                 password: ${{secrets.ACTION_MAIL_PASSWORD}}
-                subject: Cirrus-CI cron build failures on ${{github.repository}}
+                subject: Cirrus-CI build failures on ${{github.repository}}
                 to: "podman-monitor@lists.podman.io"
                 from: ${{secrets.ACTION_MAIL_SENDER}}
                 body: "podman-machine-os build failed on branch ${{ steps.retro.outputs.branch }}: https://cirrus-ci.com/build/${{ steps.retro.outputs.bid }}"
