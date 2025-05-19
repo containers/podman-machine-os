@@ -182,6 +182,10 @@ publish_images_task:
         podman images
         podman login -u "$QUAY_USER" --password-stdin quay.io <<<"$QUAY_PASSWORD"
         time podman manifest push --all "$FULL_IMAGE_NAME"
+        if [[ "$CIRRUS_BRANCH" == "main" ]]; then
+            # When running on main push a "next" tag as well.
+            time podman manifest push --all "$FULL_IMAGE_NAME" "${FULL_IMAGE_NAME%:*}:next"
+        fi
     release_script: |
         if [[ $CIRRUS_TAG != '' ]]; then
             pushd $OUTDIR
