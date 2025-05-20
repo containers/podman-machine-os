@@ -148,9 +148,8 @@ func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
 		diskSize = m.diskSize
 	}
 	cmdLine := []string{"machine", "init", "--now", "--image", m.imagePath, "--disk-size", strconv.Itoa(int(diskSize)), machineName}
-	session, err := mb.setName(machineName).setCmd(cmdLine).run()
+	session, err := m.setName(machineName).setCmd(cmdLine).run()
 	return machineName, session, err
-
 }
 
 func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration, wait bool) (*machineSession, error) {
@@ -211,30 +210,40 @@ func (matcher *ValidJSONMatcher) NegatedFailureMessage(actual interface{}) (mess
 	return format.Message(actual, "to _not_ be valid JSON")
 }
 
-//func skipIfVmtype(vmType define.VMType, message string) {
-//	if isVmtype(vmType) {
-//		Skip(message)
-//	}
-//}
-//
-//func skipIfNotVmtype(vmType define.VMType, message string) {
-//	if !isVmtype(vmType) {
-//		Skip(message)
-//	}
-//}
-//
-//func skipIfWSL(message string) {
-//	skipIfVmtype(define.WSLVirt, message)
-//}
-//
-//func isVmtype(vmType define.VMType) bool {
-//	return testProvider.VMType() == vmType
-//}
-//
-//// isWSL is a simple wrapper to determine if the testprovider is WSL
-//func isWSL() bool {
-//	return isVmtype(define.WSLVirt)
-//}
+func (m *imageTestBuilder) skipIfVmtype(vmType string, message string) {
+	if m.isVmtype(vmType) {
+		Skip(message)
+	}
+}
+
+func (m *imageTestBuilder) skipIfNotVmtype(vmType string, message string) {
+	if !m.isVmtype(vmType) {
+		Skip(message)
+	}
+}
+
+const (
+	QemuVirt = "wsl"
+	WSLVirt = "qemu"
+	AppleHvVirt = "applehv"
+	HyperVVirt = "hyperv"
+	LibKrun = "libkrun"
+	UnknownVirt = "unknown"
+)
+
+func (m *imageTestBuilder) isVmtype(vmType string) bool {
+	return vmType == m.vmType()
+}
+
+func (m *imageTestBuilder) vmType() string {
+	cmdLine := []string{"machine", "info", "--format", "{{.Host.VMType}}"}
+	session, err := m.setCmd(cmdLine).run()
+	if err != nil {
+		return UnknownVirt
+	} else {
+		return session.outputToString()
+	}
+}
 
 // Only used on Windows
 //

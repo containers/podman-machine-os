@@ -1,0 +1,135 @@
+package verify
+
+import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gexec"
+	"os"
+	"strconv"
+)
+
+var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
+	var (
+		machineName string
+		session     *machineSession
+		mb          *imageTestBuilder
+		testDir     string
+	)
+
+	BeforeAll(func() {
+		testDir, mb = setup()
+		machineName, session, err = mb.initNowWithName()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(session).To(Exit(0))
+		DeferCleanup(func() {
+			// stop and remove all machines first before deleting the processes
+			clean := []string{"machine", "reset", "-f"}
+			session, err := mb.setCmd(clean).run()
+
+			teardown(originalHomeDir, testDir)
+
+			// check errors only after we called teardown() otherwise it is not called on failures
+			Expect(err).ToNot(HaveOccurred(), "cleaning up after test")
+			Expect(session).To(Exit(0))
+		})
+	})
+
+	Context("when the podman machine is up and running", func() {
+		It("should serve the Podman rootful API", func() {
+			curlCmd := []string{"machine", "ssh", machineName, "sudo", "curl", "-sS", "--unix-socket", "/run/podman/podman.sock", "http://d/_ping"}
+			curlSession, err := mb.setCmd(curlCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(curlSession).To(Exit(0))
+			Expect(curlSession.outputToString()).To(Equal("OK"))
+		})
+		It("should serve the Podman rootless API", func() {
+			// The host user ID is used as the `core` user ID in the Podman
+			// machine (except for Windows where the ID is hardcoded).
+			uid := os.Getuid()
+			if uid == -1 { // windows compensation
+				uid = 1000
+			}
+			rootlessSocket := "/run/user/" + strconv.Itoa(uid) + "/podman/podman.sock"
+			curlCmd := []string{"machine", "ssh", machineName, "curl", "-sS", "--unix-socket", rootlessSocket, "http://d/_ping"}
+			curlSession, err := mb.setCmd(curlCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(curlSession).To(Exit(0))
+			Expect(curlSession.outputToString()).To(Equal("OK"))
+		})
+		It("should apply the `10-inotify-instances.conf` successfully", func() {
+			maxUserInstancesCmd := []string{"machine", "ssh", machineName, "sysctl", "fs.inotify.max_user_instances"}
+			maxUserInstancesSession, err := mb.setCmd(maxUserInstancesCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(maxUserInstancesSession).To(Exit(0))
+			Expect(maxUserInstancesSession.outputToString()).To(ContainSubstring("fs.inotify.max_user_instances = 524288"))
+		})
+		It("should apply the `10-autologin.conf` successfully", func() {
+			autologinArgv := "argv[]=/usr/sbin/agetty --autologin root --noclear ttyS0 $TERM"
+			autologinCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ExecStart", "show", "getty@ttyS0"}
+			autologinSerialCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ExecStart", "show", "serial-getty@ttyS0.service"}
+			autologinSession, err := mb.setCmd(autologinCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(autologinSession).To(Exit(0))
+			autologinSerialSession, err := mb.setCmd(autologinSerialCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(autologinSerialSession).To(Exit(0))
+			Expect(autologinSession.outputToString()).To(And(ContainSubstring(autologinArgv), Equal(autologinSerialSession.outputToString())))
+		})
+		It("should have zero failed services", func() {
+			getFailedSvcCmd := []string{"machine", "ssh", machineName, "systemctl", "--failed", "-q"}
+			getFailedSvcSession, err := mb.setCmd(getFailedSvcCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(getFailedSvcSession).To(Exit(0))
+			Expect(getFailedSvcSession.outputToString()).To(BeEmpty())
+		})
+		It("should load RHEL subscription manager service", func() {
+			subscriptionManagerCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "LoadState", "show", "rhsmcertd"}
+			subscriptionManagerSession, err := mb.setCmd(subscriptionManagerCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(subscriptionManagerSession).To(Exit(0))
+			Expect(subscriptionManagerSession.outputToString()).To(Equal("loaded"))
+		})
+		It("should load Rosetta activation service", func() {
+			mb.skipIfNotVmtype(AppleHvVirt, "Rosetta service is activated when the provider is applehv")
+			rosettaCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ActiveState", "show", "rosetta-activation.service"}
+			rosettaSession, err := mb.setCmd(rosettaCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rosettaSession).To(Exit(0))
+			Expect(rosettaSession.outputToString()).To(Equal("active"))
+		})
+		It("should have zero critical error messages journalctl", func() {
+			mb.skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
+			mb.skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")
+			// Inspect journalctl for any message of priority
+			// "emerg" (0), "alert" (1) or "crit" (2). Messages with
+			// priority "err" (3) or "warning" (4) are tolerated.
+			journalctlCmd := []string{"machine", "ssh", machineName, "journalctl", "-p", "0..2", "-q"}
+			journalctlSession, err := mb.setCmd(journalctlCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(journalctlSession).To(Exit(0))
+			Expect(journalctlSession.outputToString()).To(BeEmpty())
+		})
+		It("should have zero warning/error messages in podman or gvforwarder logs", func() {
+			journalctlPodmanCmd := []string{"machine", "ssh", machineName, "journalctl", "-p", "0..4", "-q", "/usr/libexec/podman/gvforwarder", "/usr/bin/podman"}
+			journalctlPodmanSession, err := mb.setCmd(journalctlPodmanCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(journalctlPodmanSession).To(Exit(0))
+			Expect(journalctlPodmanSession.outputToString()).To(BeEmpty())
+		})
+		It("should start gvforwarder services successfully on windows", func() {
+			mb.skipIfNotVmtype(HyperVVirt, "gvforwarder is started on Windows only")
+			journalctlGvforwarderCmd := []string{"machine", "ssh", machineName, "journalctl", "/usr/libexec/podman/gvforwarder"}
+			journalctlGvforwarderSession, err := mb.setCmd(journalctlGvforwarderCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(journalctlGvforwarderSession).To(Exit(0))
+			Expect(journalctlGvforwarderSession.outputToString()).To(ContainSubstring("waiting for packets..."))
+		})
+		It("should setup lingering for user `core`", func() {
+			checkLingeringCmd := []string{"machine", "ssh", machineName, "loginctl", "-P", "Linger", "show-user", "core"}
+			checkLingeringSession, err := mb.setCmd(checkLingeringCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(checkLingeringSession).To(Exit(0))
+			Expect(checkLingeringSession.outputToString()).To(Equal("yes"))
+		})
+	})
+})

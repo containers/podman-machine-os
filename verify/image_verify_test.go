@@ -9,7 +9,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gexec"
 )
 
 func TestMain(m *testing.M) {
@@ -105,26 +104,6 @@ func teardown(origHomeDir string, testDir string) {
 		}
 	}
 }
-
-var (
-	mb      *imageTestBuilder
-	testDir string
-)
-
-var _ = BeforeEach(func() {
-	testDir, mb = setup()
-	DeferCleanup(func() {
-		// stop and remove all machines first before deleting the processes
-		clean := []string{"machine", "reset", "-f"}
-		session, err := mb.setCmd(clean).run()
-
-		teardown(originalHomeDir, testDir)
-
-		// check errors only after we called teardown() otherwise it is not called on failures
-		Expect(err).ToNot(HaveOccurred(), "cleaning up after test")
-		Expect(session).To(Exit(0))
-	})
-})
 
 // guardedRemoveAll functions much like os.RemoveAll but
 // will not delete certain catastrophic paths.

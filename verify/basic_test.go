@@ -11,6 +11,25 @@ import (
 )
 
 var _ = Describe("run basic podman commands", func() {
+	var (
+		mb      *imageTestBuilder
+		testDir string
+	)
+	BeforeEach(func() {
+		testDir, mb = setup()
+		DeferCleanup(func() {
+			// stop and remove all machines first before deleting the processes
+			clean := []string{"machine", "reset", "-f"}
+			session, err := mb.setCmd(clean).run()
+
+			teardown(originalHomeDir, testDir)
+
+			// check errors only after we called teardown() otherwise it is not called on failures
+			Expect(err).ToNot(HaveOccurred(), "cleaning up after test")
+			Expect(session).To(Exit(0))
+		})
+	})
+
 	It("Basic ops", func() {
 		imgName := "quay.io/libpod/testimage:20241011"
 		machineName, session, err := mb.initNowWithName()
@@ -147,6 +166,18 @@ var _ = Describe("run basic podman commands", func() {
 			// Expect(server).To(Exit(0))
 			// Expect(server.outputToString()).To(Equal(version))
 		}
+
+		// Stop machine
+		stopMachineCmd := []string{"machine", "stop", machineName}
+		StopMachineSession, err := mb.setCmd(stopMachineCmd).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(StopMachineSession).To(Exit(0))
+
+		// Remove machine
+		removeMachineCmd := []string{"machine", "rm", "-f", machineName}
+		removeMachineSession, err := mb.setCmd(removeMachineCmd).run()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(removeMachineSession).To(Exit(0))
 	})
 
 	It("machine stop/start cycle", func() {
