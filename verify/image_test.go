@@ -1,11 +1,12 @@
 package verify
 
 import (
+	"os"
+	"strconv"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gexec"
-	"os"
-	"strconv"
 )
 
 var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
@@ -90,7 +91,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(subscriptionManagerSession.outputToString()).To(Equal("loaded"))
 		})
 		It("should load Rosetta activation service", func() {
-			mb.skipIfNotVmtype(AppleHvVirt, "Rosetta service is activated when the provider is applehv")
+			skipIfNotVmtype(AppleHvVirt, "Rosetta service is activated when the provider is applehv")
 			rosettaCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ActiveState", "show", "rosetta-activation.service"}
 			rosettaSession, err := mb.setCmd(rosettaCmd).run()
 			Expect(err).ToNot(HaveOccurred())
@@ -98,8 +99,8 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(rosettaSession.outputToString()).To(Equal("active"))
 		})
 		It("should have zero critical error messages journalctl", func() {
-			mb.skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
-			mb.skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")
+			skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
+			skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")
 			// Inspect journalctl for any message of priority
 			// "emerg" (0), "alert" (1) or "crit" (2). Messages with
 			// priority "err" (3) or "warning" (4) are tolerated.
@@ -117,7 +118,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(journalctlPodmanSession.outputToString()).To(BeEmpty())
 		})
 		It("should start gvforwarder services successfully on windows", func() {
-			mb.skipIfNotVmtype(HyperVVirt, "gvforwarder is started on Windows only")
+			skipIfNotVmtype(HyperVVirt, "gvforwarder is started on Windows only")
 			journalctlGvforwarderCmd := []string{"machine", "ssh", machineName, "journalctl", "/usr/libexec/podman/gvforwarder"}
 			journalctlGvforwarderSession, err := mb.setCmd(journalctlGvforwarderCmd).run()
 			Expect(err).ToNot(HaveOccurred())

@@ -210,41 +210,6 @@ func (matcher *ValidJSONMatcher) NegatedFailureMessage(actual interface{}) (mess
 	return format.Message(actual, "to _not_ be valid JSON")
 }
 
-func (m *imageTestBuilder) skipIfVmtype(vmType string, message string) {
-	if m.isVmtype(vmType) {
-		Skip(message)
-	}
-}
-
-func (m *imageTestBuilder) skipIfNotVmtype(vmType string, message string) {
-	if !m.isVmtype(vmType) {
-		Skip(message)
-	}
-}
-
-const (
-	QemuVirt = "wsl"
-	WSLVirt = "qemu"
-	AppleHvVirt = "applehv"
-	HyperVVirt = "hyperv"
-	LibKrun = "libkrun"
-	UnknownVirt = "unknown"
-)
-
-func (m *imageTestBuilder) isVmtype(vmType string) bool {
-	return vmType == m.vmType()
-}
-
-func (m *imageTestBuilder) vmType() string {
-	cmdLine := []string{"machine", "info", "--format", "{{.Host.VMType}}"}
-	session, err := m.setCmd(cmdLine).run()
-	if err != nil {
-		return UnknownVirt
-	} else {
-		return session.outputToString()
-	}
-}
-
 // Only used on Windows
 //
 //nolint:unparam,unused
