@@ -182,5 +182,12 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			// Expect(server).To(Exit(0))
 			// Expect(server.outputToString()).To(Equal(version))
 		})
+		It("should have podman-user-wait-network-online.service active", func() {
+			cmd := []string{"machine", "ssh", machineName, "systemctl", "--user", "-P", "ActiveState", "show", "podman-user-wait-network-online.service"}
+			session, err := mb.setCmd(cmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session).To(Exit(0))
+			Expect(session.outputToString()).To(Equal("active"))
+		})
 	})
 })
