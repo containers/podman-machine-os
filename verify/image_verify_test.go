@@ -20,18 +20,17 @@ const (
 )
 
 var (
-	tmpDir       = os.TempDir()
-	podmanBinary string
-	err          error
-	imagePath    string
+	tmpDir         = os.TempDir()
+	podmanBinary   string
+	err            error
+	imagePath      string
+	vmTestProvider string
 )
 
-func init() {
+var _ = BeforeSuite(func() {
 	podmanBinary, err = getPodmanBinary()
-	if err != nil {
-		Fail(fmt.Sprintf("Failed to find podman binary: %v", err))
-	}
-	fmt.Printf("Using podman binary: %s\n", podmanBinary)
+	Expect(err).ToNot(HaveOccurred(), "failed to find podman binary")
+	GinkgoWriter.Printf("Using podman binary: %s\n", podmanBinary)
 	if value, ok := os.LookupEnv("TMPDIR"); !ok {
 		tmpDir = value
 	}
@@ -41,7 +40,33 @@ func init() {
 		Fail("unable to find image path")
 	}
 	imagePath = value
+
+	cmdLine := []string{"machine", "info", "--format", "{{.Host.VMType}}"}
+	session, err := runSystemCommand(podmanBinary, cmdLine, defaultTimeout, true)
+	Expect(err).ToNot(HaveOccurred(), "get machine provider")
+	vmTestProvider = session.outputToString()
+	GinkgoWriter.Printf("Using Vm provider: %s\n", vmTestProvider)
+})
+
+func skipIfVmtype(vmType string, message string) {
+	if vmTestProvider == vmType {
+		Skip(message)
+	}
 }
+
+func skipIfNotVmtype(vmType string, message string) {
+	if vmTestProvider != vmType {
+		Skip(message)
+	}
+}
+
+const (
+	QemuVirt    = "wsl"
+	WSLVirt     = "qemu"
+	AppleHvVirt = "applehv"
+	HyperVVirt  = "hyperv"
+	LibKrun     = "libkrun"
+)
 
 // TestLibpod ginkgo master function
 func TestMachine(t *testing.T) {

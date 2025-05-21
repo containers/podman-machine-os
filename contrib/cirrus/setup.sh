@@ -2,9 +2,6 @@
 
 set -xeo pipefail
 
-# Build process must run with selinux disabled?!
-setenforce 0
-
 # create a rootless user, needed to run the verification tests rootless
 ROOTLESS_USER="${ROOTLESS_USER:-some${RANDOM}dude}"
 rootless_uid=$((1500 + RANDOM % 5000))

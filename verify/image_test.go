@@ -1,11 +1,13 @@
 package verify
 
 import (
+	"os"
+	"strconv"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gexec"
-	"os"
-	"strconv"
 )
 
 var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
@@ -90,7 +92,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(subscriptionManagerSession.outputToString()).To(Equal("loaded"))
 		})
 		It("should load Rosetta activation service", func() {
-			mb.skipIfNotVmtype(AppleHvVirt, "Rosetta service is activated when the provider is applehv")
+			skipIfNotVmtype(AppleHvVirt, "Rosetta service is activated when the provider is applehv")
 			rosettaCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ActiveState", "show", "rosetta-activation.service"}
 			rosettaSession, err := mb.setCmd(rosettaCmd).run()
 			Expect(err).ToNot(HaveOccurred())
@@ -98,8 +100,8 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(rosettaSession.outputToString()).To(Equal("active"))
 		})
 		It("should have zero critical error messages journalctl", func() {
-			mb.skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
-			mb.skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")
+			skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
+			skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")
 			// Inspect journalctl for any message of priority
 			// "emerg" (0), "alert" (1) or "crit" (2). Messages with
 			// priority "err" (3) or "warning" (4) are tolerated.
@@ -117,7 +119,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(journalctlPodmanSession.outputToString()).To(BeEmpty())
 		})
 		It("should start gvforwarder services successfully on windows", func() {
-			mb.skipIfNotVmtype(HyperVVirt, "gvforwarder is started on Windows only")
+			skipIfNotVmtype(HyperVVirt, "gvforwarder is started on Windows only")
 			journalctlGvforwarderCmd := []string{"machine", "ssh", machineName, "journalctl", "/usr/libexec/podman/gvforwarder"}
 			journalctlGvforwarderSession, err := mb.setCmd(journalctlGvforwarderCmd).run()
 			Expect(err).ToNot(HaveOccurred())
@@ -130,6 +132,55 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(checkLingeringSession).To(Exit(0))
 			Expect(checkLingeringSession.outputToString()).To(Equal("yes"))
+		})
+
+		It("check systemd resolved is not in use", func() {
+			// https://github.com/containers/podman-machine-os/issues/18
+			// Note the service should not be installed as we removed the package at build time.
+			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "systemctl", "is-active", "systemd-resolved.service"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(4))
+			Expect(sshSession.outputToString()).To(Equal("inactive"))
+		})
+
+		It("iptables module should be loaded", func() {
+			// https://github.com/containers/podman/issues/25153
+			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "lsmod"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(0))
+			Expect(sshSession.outputToString()).To(And(ContainSubstring("ip_tables"), ContainSubstring("ip6_tables")))
+		})
+
+		It("check podman coreos image version", func() {
+			// set by podman-rpm-info-vars.sh
+			version := os.Getenv("PODMAN_VERSION")
+			if version == "" {
+				Skip("PODMAN_VERSION undefined")
+			}
+			// When we have an rc package fedora uses "~rc" while the upstream version is "-rc".
+			// As such we have to replace it so we can match the real version below.
+			version = strings.ReplaceAll(version, "~", "-")
+			// version is x.y.z while image uses x.y, remove .z so we can match
+			imageVersion := version
+			index := strings.LastIndex(version, ".")
+			if index >= 0 {
+				imageVersion = version[:index]
+			}
+			// verify the rpm-ostree image inside uses the proper podman image reference
+			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo rpm-ostree status --json | jq -r '.deployments[0].\"container-image-reference\"'"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(0))
+			Expect(sshSession.outputToString()).
+				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + imageVersion))
+
+			// TODO: there is no 5.5 in the copr yet as podman main would need to be bumped.
+			// But in order to do that it needs working machine images, catch-22.
+			// Skip this check for now, we should consider only doing this check on release branches.
+			// check the server version so we know we have the right version installed in the VM
+			// server, err := mb.setCmd([]string{"version", "--format", "{{.Server.Version}}"}).run()
+			// Expect(err).ToNot(HaveOccurred())
+			// Expect(server).To(Exit(0))
+			// Expect(server.outputToString()).To(Equal(version))
 		})
 	})
 })

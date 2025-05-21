@@ -51,22 +51,50 @@ image_build_task:
             ARCH: "x86_64"
             GO_ARCH: "amd64"
             VM_IMAGE: "${FEDORA_AMI}"
-            EC2_INST_TYPE: "m5zn.metal"  # Bare-metal instance is required
+            EC2_INST_TYPE: "c7i.xlarge"
         - env:
             ARCH: "aarch64"
             GO_ARCH: "arm64"
             VM_IMAGE: "${FEDORA_AARCH64_AMI}"
-            EC2_INST_TYPE: "c6g.metal"  # Bare-metal instance is required
+            EC2_INST_TYPE: "c6gn.xlarge"
 
-    setup_script: ./contrib/cirrus/setup.sh
+    setup_script: |
+        # Build process must run with selinux disabled?!
+        setenforce 0
     build_script: ./build.sh
-    verify_script: ./contrib/cirrus/verify.sh
     image_prep_script: |
         mv $OUTDIR/*.zst .
         mv $OUTDIR/podman-machine podman-machine.${ARCH}.tar
     image_artifacts: &image_artifacts
         path: "*.{zst,tar}"
         type: application/octet-stream
+
+verify_linux_task:
+    name: "Verify Linux ${ARCH}"
+    alias: "verify_linux"
+    depends_on:
+        - image_build
+    ec2_instance:
+        image: "${VM_IMAGE}"
+        type: "${EC2_INST_TYPE}"
+        region: us-east-1
+        architecture: "${GO_ARCH}"
+    env:
+        HOME: /root
+        MACHINE_IMAGE: "podman-machine.${ARCH}.qemu.qcow2.zst"
+    matrix:
+        - env:
+            ARCH: "x86_64"
+            GO_ARCH: "amd64"
+            VM_IMAGE: "${FEDORA_AMI}"
+            EC2_INST_TYPE: "m5zn.metal"  # Bare-metal instance is required
+        - env:
+            ARCH: "aarch64"
+            GO_ARCH: "arm64"
+            VM_IMAGE: "${FEDORA_AARCH64_AMI}"
+            EC2_INST_TYPE: "c6g.metal"  # Bare-metal instance is required
+    setup_script: ./contrib/cirrus/setup.sh
+    verify_script: ./contrib/cirrus/verify.sh
 
 verify_windows_task:
     name: "Verify hyperv"
@@ -149,6 +177,7 @@ publish_images_task:
     # Only push new images on tags or on commits to main
     only_if: $CIRRUS_TAG != '' || ($CIRRUS_BRANCH == 'main' && $CIRRUS_PR == "")
     depends_on:
+        - verify_linux
         - verify_windows
         - verify_macos
         - image_build
@@ -216,6 +245,7 @@ test_task:
     depends_on:
         - image_build
         - publish_images
+        - verify_linux
         - verify_windows
         - verify_macos
     container:
