@@ -98,3 +98,6 @@ RUN --network=none rm -vf /etc/resolv.conf && rpm -e systemd-resolved
 # https://github.com/containers/podman/pull/21670#discussion_r1585790802
 COPY rosetta-activation.service /etc/systemd/system/rosetta-activation.service
 COPY rosetta-activation.sh /usr/local/bin/rosetta-activation.sh
+
+# By default nothing is pulling the network-online.target so it does not get activated
+RUN ln -s /usr/lib/systemd/system/network-online.target /etc/systemd/system/multi-user.target.wants/network-online.target
