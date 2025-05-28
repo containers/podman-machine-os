@@ -9,7 +9,7 @@ echo "Preparing to build ${FULL_IMAGE_NAME}"
 # Freeze on specific commit to increase stability.
 # Renovate is configured to update to a new commit so do not update the format
 # without updating the renovate config, see .github/renovate.json5.
-gitreporef="561349037d798c14c12b77523d1320bbfb903f34"
+gitreporef="e017ddda3b20b09627f90f68ef1b708016d10864"
 gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
 curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
 
