@@ -1,6 +1,12 @@
 [Unit]
 Description=Activates Rosetta if necessary
 After=systemd-binfmt.service
+# Rosetta is not functional on kernel 6.13 or newer so we like to have it not
+# running so the VM uses qemu-user instead. While we could remove the unit I
+# prefer to keep it with a marker file as apple could ship a new rosetta
+# version anytime and then testing it should be quite simple by creating this
+# file without us having to rebuild the VM image.
+ConditionPathExists=/etc/containers/enable-rosetta
 ConditionVirtualization=apple
 ConditionArchitecture=arm64
 
