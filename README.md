@@ -4,6 +4,9 @@ This repo is for building the disk images for podman machine.
 
 ## Building the image
 
+Note this repo use git submodules. You must either clone the repo with `--recurse-submodules` or
+run `git submodule update --init`
+
 `./build.sh`
 
 ### Requirements:
