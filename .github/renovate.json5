@@ -34,17 +34,8 @@ and/or use the pre-commit hook: https://github.com/renovatebot/pre-commit-hooks
 
   "addLabels": ["release-note-none"],
 
-  "customManagers": [
-    // Track updates on
-    {
-      "customType": "regex",
-      "fileMatch": "^build.sh$",
-      // Expected version format: gitreporef="xxx"
-      "matchStrings": ["gitreporef=\"(?<currentDigest>.*?)\"\\n"],
-      "currentValueTemplate": "main",
-      "depNameTemplate": "custom-coreos-disk-images",
-      "packageNameTemplate": "https://github.com/coreos/custom-coreos-disk-images",
-      "datasourceTemplate": "git-refs"
-    },
-  ]
+  /* update the custom-coreos-disk-images submodule */
+  "git-submodules": {
+    "enabled": true
+  }
 }
