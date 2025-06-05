@@ -26,10 +26,11 @@ esac
 FEDORA_VERSION="f"$(podman run --rm "$FCOS_BASE_IMAGE" rpm --eval '%{?fedora}')
 export FEDORA_VERSION
 
+mkdir -p ./rpms
+
 # Don't fail if koji download-build can't find any rpms
 set +e
 if [[ ${PODMAN_PR_NUM} != "" ]]; then
-    mkdir -p ./rpms
     pushd ./rpms
     for pkg in container-selinux crun;
     do
@@ -61,7 +62,7 @@ set -e
 # See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_PR_NUM is
 # empty, the rpm version, release and fedora release values are of no concern
 # to the build process.
-podman build -t "${FULL_IMAGE_NAME_ARCH}" -f podman-image/Containerfile "${PWD}"/podman-image \
+podman build -t "${FULL_IMAGE_NAME_ARCH}" -v "$PWD"/rpms:/var/tmp/rpms -f podman-image/Containerfile "${PWD}"/podman-image \
     --build-arg FCOS_BASE_IMAGE="${FCOS_BASE_IMAGE}" \
     --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}" \
     --build-arg FEDORA_VERSION="${FEDORA_VERSION}"
