@@ -6,13 +6,6 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
-# Freeze on specific commit to increase stability.
-# Renovate is configured to update to a new commit so do not update the format
-# without updating the renovate config, see .github/renovate.json5.
-gitreporef="561349037d798c14c12b77523d1320bbfb903f34"
-gitrepotld="https://raw.githubusercontent.com/coreos/custom-coreos-disk-images/${gitreporef}/"
-curl -LO --fail "${gitrepotld}/custom-coreos-disk-images.sh"
-
 echo " Building image locally"
 
 # Validate PODMAN_PR_NUM var, see the Containerfile for the pull logic.
@@ -75,7 +68,7 @@ mkdir -p "$OUTDIR"
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
-pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images.sh \
+pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images/custom-coreos-disk-images.sh \
   --platforms applehv,hyperv,qemu \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
