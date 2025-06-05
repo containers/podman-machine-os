@@ -52,20 +52,38 @@ if [[ ${PODMAN_PR_NUM} != "" ]]; then
 fi
 set -e
 
+ZSTD_CMD="zstd --rm -T0 -14"
+WSL_LOG=$(mktemp)
+mkdir -p "$OUTDIR"
+
+# Spawn a subshell so we can run the WSL build in parallel as well.
+(
+    tarfile="${OUTDIR}/$DISK_IMAGE_NAME.$CPU_ARCH.wsl.tar"
+    podman build --output type=tar,dest="$tarfile" \
+    -f podman-image/Containerfile.WSL "${PWD}"/podman-image \
+    --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}" \
+    --build-arg FEDORA_VERSION="${FEDORA_VERSION:1}"
+
+    $ZSTD_CMD $tarfile
+) &>$WSL_LOG &
+
+# First kill the WSL job if we exit the script (ignoring error in case the job already finished)
+# Then print the WSL logs so we always see what it did.
+trap "kill %1 || true; echo; echo 'WSL build log:'; cat $WSL_LOG" EXIT
+
 # See podman-rpm-info-vars.sh for all build-arg values. If PODMAN_PR_NUM is
 # empty, the rpm version, release and fedora release values are of no concern
 # to the build process.
-podman build -t "${FULL_IMAGE_NAME_ARCH}" -v "$PWD"/rpms:/var/tmp/rpms -f podman-image/Containerfile "${PWD}"/podman-image \
+podman build -t "${FULL_IMAGE_NAME_ARCH}" -v "$PWD"/rpms:/var/tmp/rpms \
+    -f podman-image/Containerfile.COREOS "${PWD}"/podman-image \
     --build-arg FCOS_BASE_IMAGE="${FCOS_BASE_IMAGE}" \
-    --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}" \
-    --build-arg FEDORA_VERSION="${FEDORA_VERSION}"
+    --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}"
 
 # Use rpm-ostree rechunk to remove unwanted data/packages and save space where can
 rpm-ostree compose build-chunked-oci --bootc --from "${FULL_IMAGE_NAME_ARCH}" --output containers-storage:"${FULL_IMAGE_NAME_ARCH}"
 
 echo "Saving image from image store to filesystem"
 
-mkdir -p "$OUTDIR"
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
@@ -94,7 +112,10 @@ for hypervisor in "${!COREOS_PLATFORM_SUFFIX[@]}"; do
   mv "$filename" "$newfilename"
 
   # Compress the file
-  zstd --rm -T0 -14 "$newfilename"
+  $ZSTD_CMD "$newfilename"
 done
 
 popd
+
+# Wait for the WSL build to finish
+wait -n
