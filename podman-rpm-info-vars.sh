@@ -7,3 +7,5 @@
 # 3. If PODMAN_PR_NUM is empty, rpms will be fetched from the `rhcontainerbot/podman-next` copr.
 export PODMAN_VERSION="5.5.0"
 export PODMAN_PR_NUM="26126"
+
+# TEST
