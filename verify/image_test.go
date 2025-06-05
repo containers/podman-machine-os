@@ -92,6 +92,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(subscriptionManagerSession.outputToString()).To(Equal("loaded"))
 		})
 		It("should load Rosetta activation service", func() {
+			Skip("rosetta disabled as it doesn't work on newer kernels")
 			skipIfNotVmtype(AppleHvVirt, "Rosetta service is activated when the provider is applehv")
 			rosettaCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ActiveState", "show", "rosetta-activation.service"}
 			rosettaSession, err := mb.setCmd(rosettaCmd).run()
