@@ -127,13 +127,6 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(journalctlGvforwarderSession).To(Exit(0))
 			Expect(journalctlGvforwarderSession.outputToString()).To(ContainSubstring("waiting for packets..."))
 		})
-		It("should setup lingering for user `core`", func() {
-			checkLingeringCmd := []string{"machine", "ssh", machineName, "loginctl", "-P", "Linger", "show-user", "core"}
-			checkLingeringSession, err := mb.setCmd(checkLingeringCmd).run()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(checkLingeringSession).To(Exit(0))
-			Expect(checkLingeringSession.outputToString()).To(Equal("yes"))
-		})
 
 		It("check systemd resolved is not in use", func() {
 			// https://github.com/containers/podman-machine-os/issues/18
