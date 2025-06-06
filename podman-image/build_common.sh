@@ -79,18 +79,39 @@ else
 fi
 
 # Install subscription-manager and enable service to refresh certificates
-# Install qemu-user-static for bootc
-# Install gvisor-tap-vsock-gvforwarder for hyperv
+# Install qemu-user-static for bootc/user emulation
 # Install device-mapper (this satisfies the deps for qemu-user-static
-# Install ansible for post-install configuration
-# Remove unwanted packages
-# Remove man pages (man binary is not present)
+# We don't want all weak deps for these packages here.
 dnf install -y --setopt=install_weak_deps=false \
-    subscription-manager device-mapper qemu-user-static-aarch64 qemu-user-static-x86 && \
-    dnf install -y gvisor-tap-vsock-gvforwarder ansible-core && \
-    dnf remove -y moby-engine containerd runc toolbox qed-firmware docker-cli && \
-    rm -fr /var/cache /usr/share/man && \
-    dnf -y clean all
+    subscription-manager device-mapper qemu-user-static-aarch64 qemu-user-static-x86
+
+
+# Package list to install
+PACKAGES=(
+    # for hyperV and WSL user mode networking
+    gvisor-tap-vsock-gvforwarder
+
+    # ansible for post-install configuration (podman machine init --playbook)
+    ansible-core
+
+    # WSL specific deps (most of them are already in the coreos base so this is a NOP there)
+    procps-ng
+    openssh-server
+    cifs-utils
+    nfs-utils-coreos
+    iptables-nft
+    iproute
+    dhcp-client
+)
+
+dnf install -y "${PACKAGES[@]}"
+
+# Remove unwanted packages (mainly relevant for coreos)
+dnf remove -y moby-engine containerd runc toolbox qed-firmware docker-cli
+
+# Remove man pages (man binary is not present)
+rm -fr /var/cache /usr/share/man
+dnf -y clean all
 
 systemctl enable rhsmcertd.service
 # Patching qemu backed binfmt configurations to use the actual executable's permissions and not the interpreter's
