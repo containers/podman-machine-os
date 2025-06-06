@@ -122,12 +122,11 @@ verify_windows_task:
             FILETYPE: tar
     setup_script: .\contrib\cirrus\windows_setup.ps1
     main_script: |
-        $Env:CONTAINERS_MACHINE_PROVIDER = "${ENV:PROVIDER}"
-        $Env:MACHINE_IMAGE_PATH="..\${ENV:MACHINE_IMAGE}"
-        .\bin\ginkgo -v .\verify
+        powershell.exe -File ".\contrib\cirrus\win-sess-launch.ps1"  ".\contrib\cirrus\win-verify.ps1"
         if ( ($LASTEXITCODE -ne $null) -and ($LASTEXITCODE -ne 0) ) {
             throw "Exit code = '$LASTEXITCODE' running ginkgo"
         }
+
 
 verify_macos_task:
     name: "Verify $CONTAINERS_MACHINE_PROVIDER"

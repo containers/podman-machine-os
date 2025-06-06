@@ -47,6 +47,11 @@ Write-Host "Installation completed successfully!`n"
 Write-Host "Podman version"
 podman.exe --version
 
+Write-Host "Saving selection of CI env. vars."
+# Env. vars will not pass through win-sess-launch.ps1
+Get-ChildItem -Path "Env:\*" -include @("PATH", "PROVIDER", "MACHINE_IMAGE", "TEST_*", "CI_*") `
+  | Export-CLIXML "$ENV:TEMP\envars.xml"
+
 Write-Host "Installing ginkgo"
 Set-Location ".\verify"
 New-Item ..\bin -ItemType Directory
