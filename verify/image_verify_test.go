@@ -61,8 +61,8 @@ func skipIfNotVmtype(vmType string, message string) {
 }
 
 const (
-	QemuVirt    = "wsl"
-	WSLVirt     = "qemu"
+	QemuVirt    = "qemu"
+	WSLVirt     = "wsl"
 	AppleHvVirt = "applehv"
 	HyperVVirt  = "hyperv"
 	LibKrun     = "libkrun"
