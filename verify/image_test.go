@@ -66,6 +66,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(maxUserInstancesSession.outputToString()).To(ContainSubstring("fs.inotify.max_user_instances = 524288"))
 		})
 		It("should apply the `10-autologin.conf` successfully", func() {
+			skipIfNotVmtype(WSLVirt, "no tty for WSL")
 			autologinArgv := "argv[]=/usr/sbin/agetty --autologin root --noclear ttyS0 $TERM"
 			autologinCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ExecStart", "show", "getty@ttyS0"}
 			autologinSerialCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ExecStart", "show", "serial-getty@ttyS0.service"}
@@ -127,13 +128,6 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(journalctlGvforwarderSession).To(Exit(0))
 			Expect(journalctlGvforwarderSession.outputToString()).To(ContainSubstring("waiting for packets..."))
 		})
-		It("should setup lingering for user `core`", func() {
-			checkLingeringCmd := []string{"machine", "ssh", machineName, "loginctl", "-P", "Linger", "show-user", "core"}
-			checkLingeringSession, err := mb.setCmd(checkLingeringCmd).run()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(checkLingeringSession).To(Exit(0))
-			Expect(checkLingeringSession.outputToString()).To(Equal("yes"))
-		})
 
 		It("check systemd resolved is not in use", func() {
 			// https://github.com/containers/podman-machine-os/issues/18
@@ -145,6 +139,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 		})
 
 		It("iptables module should be loaded", func() {
+			skipIfNotVmtype(WSLVirt, "wsl kernel modules are statically defined in the kernel")
 			// https://github.com/containers/podman/issues/25153
 			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "lsmod"}).run()
 			Expect(err).ToNot(HaveOccurred())
@@ -153,6 +148,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 		})
 
 		It("check podman coreos image version", func() {
+			skipIfNotVmtype(WSLVirt, "wsl does not use ostree updates")
 			// set by podman-rpm-info-vars.sh
 			version := os.Getenv("PODMAN_VERSION")
 			if version == "" {

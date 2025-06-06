@@ -25,6 +25,9 @@ disk_format_from_flavor () {
     "qemu")
       echo "qcow2"
       ;;
+    "wsl")
+      echo "tar"
+      ;;
     *)
       echo "unknown flavor $1"
       exit 1
@@ -33,8 +36,7 @@ disk_format_from_flavor () {
 }
 
 
-DISK_FLAVORS=("applehv" "hyperv" "qemu")
-DISK_FLAVORS_W_SUFFIX=("applehv.raw" "hyperv.vhdx" "qemu.qcow2")
+DISK_FLAVORS=("applehv" "hyperv" "qemu" "wsl")
 
 # OUTDIR needs to be run in TMT test as a non-root user after initial root
 # login
