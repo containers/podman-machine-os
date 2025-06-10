@@ -207,7 +207,7 @@ publish_images_task:
         fi
     push_script: |
         mkdir $OUTDIR
-        for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst tar; do
+        for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst wsl.tar.zst tar; do
             for arch in x86_64 aarch64; do
                 name="podman-machine.$arch.$end"
                 curl --retry 5 --retry-delay 8 --fail --location -O --output-dir $OUTDIR --url "${MACHINE_IMAGE_BASE_URL}$name"
