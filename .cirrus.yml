@@ -98,7 +98,7 @@ verify_linux_task:
     verify_script: ./contrib/cirrus/verify.sh
 
 verify_windows_task:
-    name: "Verify hyperv"
+    name: "Verify ${PROVIDER}"
     alias: "verify_windows"
     depends_on:
         - image_build
@@ -112,15 +112,21 @@ verify_windows_task:
         CIRRUS_WORKING_DIR: "${LOCALAPPDATA}\\cirrus-ci-build"
         CIRRUS_SHELL: powershell
         PATH: "${PATH};C:\\Program Files\\RedHat\\Podman"
-        MACHINE_IMAGE: "podman-machine.${ARCH}.hyperv.vhdx.zst"
+        MACHINE_IMAGE: "podman-machine.${ARCH}.${PROVIDER}.${FILETYPE}.zst"
+    matrix:
+        - env:
+            PROVIDER: hyperv
+            FILETYPE: vhdx
+        - env:
+            PROVIDER: wsl
+            FILETYPE: tar
     setup_script: .\contrib\cirrus\windows_setup.ps1
     main_script: |
-        $Env:CONTAINERS_MACHINE_PROVIDER = "hyperv"
-        $Env:MACHINE_IMAGE_PATH="..\${ENV:MACHINE_IMAGE}"
-        .\bin\ginkgo -v .\verify
+        powershell.exe -File ".\contrib\cirrus\win-sess-launch.ps1"  ".\contrib\cirrus\win-verify.ps1"
         if ( ($LASTEXITCODE -ne $null) -and ($LASTEXITCODE -ne 0) ) {
             throw "Exit code = '$LASTEXITCODE' running ginkgo"
         }
+
 
 verify_macos_task:
     name: "Verify $CONTAINERS_MACHINE_PROVIDER"

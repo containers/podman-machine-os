@@ -25,7 +25,7 @@ function download($uri, $file) {
 download "${ENV:MACHINE_IMAGE_BASE_URL}${ENV:MACHINE_IMAGE}" "${ENV:MACHINE_IMAGE}"
 
 # Download and install podman
-$uri = "https://github.com/containers/podman/releases/download/v${ENV:PODMAN_INSTALL_VERSION}/podman-${ENV:PODMAN_INSTALL_VERSION}-setup.exe"
+$uri = "https://github.com/containers/podman/releases/download/v${ENV:PODMAN_INSTALL_VERSION}/podman-installer-windows-amd64.exe"
 $installer = "podman-setup.exe"
 download "$uri" "$installer"
 
@@ -46,6 +46,11 @@ Write-Host "Installation completed successfully!`n"
 
 Write-Host "Podman version"
 podman.exe --version
+
+Write-Host "Saving selection of CI env. vars."
+# Env. vars will not pass through win-sess-launch.ps1
+Get-ChildItem -Path "Env:\*" -include @("PATH", "PROVIDER", "MACHINE_IMAGE", "TEST_*", "CI_*") `
+  | Export-CLIXML "$ENV:TEMP\envars.xml"
 
 Write-Host "Installing ginkgo"
 Set-Location ".\verify"

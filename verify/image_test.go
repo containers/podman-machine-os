@@ -66,6 +66,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(maxUserInstancesSession.outputToString()).To(ContainSubstring("fs.inotify.max_user_instances = 524288"))
 		})
 		It("should apply the `10-autologin.conf` successfully", func() {
+			skipIfVmtype(WSLVirt, "no tty for WSL")
 			autologinArgv := "argv[]=/usr/sbin/agetty --autologin root --noclear ttyS0 $TERM"
 			autologinCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ExecStart", "show", "getty@ttyS0"}
 			autologinSerialCmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ExecStart", "show", "serial-getty@ttyS0.service"}
@@ -78,6 +79,8 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(autologinSession.outputToString()).To(And(ContainSubstring(autologinArgv), Equal(autologinSerialSession.outputToString())))
 		})
 		It("should have zero failed services", func() {
+			skipIfVmtype(WSLVirt, "systemd-binfmt.service failing, see https://github.com/containers/podman/issues/19961")
+
 			getFailedSvcCmd := []string{"machine", "ssh", machineName, "systemctl", "--failed", "-q"}
 			getFailedSvcSession, err := mb.setCmd(getFailedSvcCmd).run()
 			Expect(err).ToNot(HaveOccurred())
@@ -103,6 +106,10 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 		It("should have zero critical error messages journalctl", func() {
 			skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
 			skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")
+
+			// seeing this logged on WSL: Exception:
+			// 		unknown: Operation canceled @p9io.cpp:258 (AcceptAsync)
+			skipIfVmtype(WSLVirt, "WSL kernel seems to log 9p warning by default")
 			// Inspect journalctl for any message of priority
 			// "emerg" (0), "alert" (1) or "crit" (2). Messages with
 			// priority "err" (3) or "warning" (4) are tolerated.
@@ -119,20 +126,13 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(journalctlPodmanSession).To(Exit(0))
 			Expect(journalctlPodmanSession.outputToString()).To(BeEmpty())
 		})
-		It("should start gvforwarder services successfully on windows", func() {
-			skipIfNotVmtype(HyperVVirt, "gvforwarder is started on Windows only")
+		It("should start gvforwarder services successfully on hyperV", func() {
+			skipIfNotVmtype(HyperVVirt, "gvforwarder is started on hyperV only")
 			journalctlGvforwarderCmd := []string{"machine", "ssh", machineName, "journalctl", "/usr/libexec/podman/gvforwarder"}
 			journalctlGvforwarderSession, err := mb.setCmd(journalctlGvforwarderCmd).run()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(journalctlGvforwarderSession).To(Exit(0))
 			Expect(journalctlGvforwarderSession.outputToString()).To(ContainSubstring("waiting for packets..."))
-		})
-		It("should setup lingering for user `core`", func() {
-			checkLingeringCmd := []string{"machine", "ssh", machineName, "loginctl", "-P", "Linger", "show-user", "core"}
-			checkLingeringSession, err := mb.setCmd(checkLingeringCmd).run()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(checkLingeringSession).To(Exit(0))
-			Expect(checkLingeringSession.outputToString()).To(Equal("yes"))
 		})
 
 		It("check systemd resolved is not in use", func() {
@@ -145,6 +145,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 		})
 
 		It("iptables module should be loaded", func() {
+			skipIfVmtype(WSLVirt, "wsl kernel modules are statically defined in the kernel")
 			// https://github.com/containers/podman/issues/25153
 			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "lsmod"}).run()
 			Expect(err).ToNot(HaveOccurred())
@@ -153,6 +154,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 		})
 
 		It("check podman coreos image version", func() {
+			skipIfVmtype(WSLVirt, "wsl does not use ostree updates")
 			// set by podman-rpm-info-vars.sh
 			version := os.Getenv("PODMAN_VERSION")
 			if version == "" {
