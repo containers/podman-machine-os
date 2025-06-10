@@ -87,24 +87,28 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(doubleCheckCmdSession).To(Exit(0))
 		Expect(len(doubleCheckCmdSession.outputToStringSlice())).To(Equal(0))
 
-		// Test emulation so we know it always works, we had a kernel update
-		// broke rosetta on applehv so we like to catch that the next time.
-		var expectedArch string
-		var goArch string
-		switch runtime.GOARCH {
-		case "amd64":
-			goArch = "arm64"
-			expectedArch = "aarch64"
-		case "arm64":
-			goArch = "amd64"
-			expectedArch = "x86_64"
+		// systemd-binfmt.service is failing to configure emulation, so we cannot test that there yet
+		// https://github.com/containers/podman/issues/19961
+		if vmTestProvider != WSLVirt {
+			// Test emulation so we know it always works, we had a kernel update
+			// broke rosetta on applehv so we like to catch that the next time.
+			var expectedArch string
+			var goArch string
+			switch runtime.GOARCH {
+			case "amd64":
+				goArch = "arm64"
+				expectedArch = "aarch64"
+			case "arm64":
+				goArch = "amd64"
+				expectedArch = "x86_64"
+			}
+			// quiet to not get the pull output
+			archCommand := []string{"run", "--quiet", "--platform", "linux/" + goArch, imgName, "arch"}
+			archSession, err := mb.setCmd(archCommand).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(archSession).To(Exit(0))
+			Expect(archSession.outputToString()).To(Equal(expectedArch))
 		}
-		// quiet to not get the pull output
-		archCommand := []string{"run", "--quiet", "--platform", "linux/" + goArch, imgName, "arch"}
-		archSession, err := mb.setCmd(archCommand).run()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(archSession).To(Exit(0))
-		Expect(archSession.outputToString()).To(Equal(expectedArch))
 
 		// Stop machine
 		stopMachineCmd := []string{"machine", "stop", machineName}

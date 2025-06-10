@@ -79,6 +79,8 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(autologinSession.outputToString()).To(And(ContainSubstring(autologinArgv), Equal(autologinSerialSession.outputToString())))
 		})
 		It("should have zero failed services", func() {
+			skipIfVmtype(WSLVirt, "systemd-binfmt.service failing, see https://github.com/containers/podman/issues/19961")
+
 			getFailedSvcCmd := []string{"machine", "ssh", machineName, "systemctl", "--failed", "-q"}
 			getFailedSvcSession, err := mb.setCmd(getFailedSvcCmd).run()
 			Expect(err).ToNot(HaveOccurred())
