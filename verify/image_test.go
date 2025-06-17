@@ -65,6 +65,22 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(maxUserInstancesSession).To(Exit(0))
 			Expect(maxUserInstancesSession.outputToString()).To(ContainSubstring("fs.inotify.max_user_instances = 524288"))
 		})
+
+		It("podman-user-wait-network-online.service works", func() {
+			skipIfVmtype(WSLVirt, "no network manager in WSL")
+
+			cmd := []string{"machine", "ssh", machineName, "systemctl", "--user", "start", "podman-user-wait-network-online.service"}
+			session, err := mb.setCmd(cmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session).To(Exit(0))
+
+			cmd = []string{"machine", "ssh", machineName, "systemctl", "--user", "-P", "ActiveState", "show", "podman-user-wait-network-online.service"}
+			session, err = mb.setCmd(cmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session).To(Exit(0))
+			Expect(session.outputToString()).To(Equal("active"))
+		})
+
 		It("should apply the `10-autologin.conf` successfully", func() {
 			skipIfVmtype(WSLVirt, "no tty for WSL")
 			autologinArgv := "argv[]=/usr/sbin/agetty --autologin root --noclear ttyS0 $TERM"
