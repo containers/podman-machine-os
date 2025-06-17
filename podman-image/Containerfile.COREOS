@@ -9,6 +9,9 @@ RUN --mount=type=bind,source=/build_common.sh,target=/run/build_common.sh,z \
 
 COPY podman-iptables.conf /etc/modules-load.d/podman-iptables.conf
 
+# Work around for network-online.target issue https://github.com/containers/podman/issues/26134
+COPY podman-user-wait-network-online-override.conf /usr/lib/systemd/user/podman-user-wait-network-online.service.d/podman-user-wait-network-online-override.conf
+
 ## Enables automatic login on the console;
 ## there's no security concerns here, and this makes debugging easier.
 ## xref https://docs.fedoraproject.org/en-US/fedora-coreos/tutorial-autologin/
