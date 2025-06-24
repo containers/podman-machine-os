@@ -96,6 +96,9 @@ verify_linux_task:
             EC2_INST_TYPE: "c6g.metal"  # Bare-metal instance is required
     setup_script: ./contrib/cirrus/setup.sh
     verify_script: ./contrib/cirrus/verify.sh
+    # Verify we have gh installed
+    # TODO: should we verify if the release tokens are valid by testing the login?
+    gh_script: gh --version
 
 verify_windows_task:
     name: "Verify ${PROVIDER}"
@@ -200,11 +203,6 @@ publish_images_task:
         QUAY_PASSWORD: ENCRYPTED[3cfabb0f7fa6a36dc6af433f5a0291d87b38402c922b662e9647931a635f20ca33401aa91b29745b7af252538406a292]
         RELEASE_TOKEN: ENCRYPTED[51eebe3e4119c3c51078be7827458df1e63c882851484f95bc0624a0d4ddbed48163debc1afb33711d268d9b444eaa3a]
         LABEL_TOKEN: ENCRYPTED[4095757ab03fa845ea08ab99cb8fe3a560e65de22204fbac07043d076d2f498ab5fedd0491659d8f3baef2c831b482aa]
-    install_script: |
-        # TODO: remove install once gh is in the image
-        if [[ $CIRRUS_TAG != '' ]]; then
-            sudo dnf install -y gh
-        fi
     push_script: |
         mkdir $OUTDIR
         for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst wsl.tar.zst tar; do
