@@ -67,8 +67,9 @@ EOF
 if [[ ${PODMAN_PR_NUM} == "" ]]; then \
     curl --fail -o /etc/yum.repos.d/rhcontainerbot-podman-next-fedora.repo https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman-next/repo/fedora-rawhide/rhcontainerbot-podman-next-fedora-rawhide.repo
     curl --fail -o /etc/pki/rpm-gpg/rhcontainerbot-podman-next-fedora.gpg https://download.copr.fedorainfracloud.org/results/rhcontainerbot/podman-next/pubkey.gpg
+    dnf install -y crun-1.21-1.20250612195640314612.main.198.gd89542c6.fc42 crun-1.21-1.20250612195640314612.main.198.gd89542c6.fc42
     dnf install --best -y \
-    aardvark-dns crun netavark podman containers-common containers-common-extra crun-wasm
+    aardvark-dns netavark podman containers-common containers-common-extra
 else
     shopt -s nullglob
     FILE="/var/tmp/rpms/*.rpm"
