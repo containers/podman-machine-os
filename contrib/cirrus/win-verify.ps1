@@ -4,6 +4,9 @@ Import-CLIXML "$ENV:TEMP\envars.xml" | % {
     Set-Item "Env:$($_.Name)" "$($_.Value)"
 }
 
+# Output info so we know what version we are testing.
+wsl --version
+
 $Env:CONTAINERS_MACHINE_PROVIDER = "${ENV:PROVIDER}"
 $Env:MACHINE_IMAGE_PATH="..\${ENV:MACHINE_IMAGE}"
 .\bin\ginkgo -v .\verify
