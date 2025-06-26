@@ -102,6 +102,9 @@ PACKAGES=(
     iptables-nft
     iproute
     dhcp-client
+
+    # cpp for buildah.in support
+    cpp
 )
 
 dnf install -y "${PACKAGES[@]}"
