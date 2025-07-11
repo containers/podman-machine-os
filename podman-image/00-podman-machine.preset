@@ -3,3 +3,6 @@
 # Disable Root mountpoint warning on shh login
 # https://github.com/containers/podman-machine-os/issues/155
 disable coreos-warn-invalid-mounts.service
+
+# Disable coreos chrony config, we do provide our own.
+disable coreos-platform-chrony-config.service

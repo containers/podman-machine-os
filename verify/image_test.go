@@ -171,6 +171,14 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(sshSession.outputToString()).To(Equal("inactive"))
 		})
 
+		It("check coreos-platform-chrony-config.service is not in use", func() {
+			skipIfVmtype(WSLVirt, "wsl image does not have coreos-platform-chrony-config.service")
+			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "systemctl", "is-active", "coreos-platform-chrony-config.service"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(3))
+			Expect(sshSession.outputToString()).To(Equal("inactive"))
+		})
+
 		It("iptables module should be loaded", func() {
 			skipIfVmtype(WSLVirt, "wsl kernel modules are statically defined in the kernel")
 			// https://github.com/containers/podman/issues/25153

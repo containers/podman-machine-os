@@ -21,9 +21,6 @@ COPY 00-podman-machine.preset /usr/lib/systemd/system-preset/00-podman-machine.p
 COPY  10-autologin.conf /etc/systemd/system/serial-getty@.service.d/10-autologin.conf
 COPY  10-autologin.conf /etc/systemd/system/getty@.service.d/10-autologin.conf
 
-# Disable ignition chrony overrides
-RUN systemctl disable coreos-platform-chrony-config.service
-
 # Disable the systemd resolver, the unit cannot be disabled/ or masked
 # https://fedoraproject.org/wiki/Changes/systemd-resolved#Fully_opting_out_of_systemd-resolved_use
 # https://github.com/containers/podman-machine-os/issues/18
