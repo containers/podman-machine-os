@@ -133,12 +133,8 @@ func (m *imageTestBuilder) setTimeout(timeout time.Duration) *imageTestBuilder {
 	return m
 }
 
-func (m *imageTestBuilder) runWithoutWait() (*machineSession, error) {
-	return runWrapper(podmanBinary, m.cmd, m.timeout, false)
-}
-
 func (m *imageTestBuilder) run() (*machineSession, error) {
-	return runWrapper(podmanBinary, m.cmd, m.timeout, true)
+	return runWrapper(podmanBinary, m.cmd, m.timeout)
 }
 
 func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
@@ -152,7 +148,7 @@ func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
 	return machineName, session, err
 }
 
-func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration, wait bool) (*machineSession, error) {
+func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration) (*machineSession, error) {
 	if len(os.Getenv("DEBUG")) > 0 {
 		cmdArgs = append([]string{"--log-level=debug"}, cmdArgs...)
 	}
@@ -164,9 +160,7 @@ func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration, wa
 		return nil, err
 	}
 	ms := machineSession{session}
-	if wait {
-		ms.waitWithTimeout(timeout)
-	}
+	ms.waitWithTimeout(timeout)
 	return &ms, nil
 }
 
