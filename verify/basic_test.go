@@ -48,11 +48,13 @@ var _ = Describe("run basic podman commands", func() {
 		Expect(len(checkImages.outputToStringSlice())).To(Equal(1))
 		Expect(checkImages.outputToStringSlice()).To(ContainElement(imgName))
 
-		// Run simple container
-		runCmdDate := []string{"run", "-it", imgName, "ls"}
+		// Run simple container and check that host-gateway works
+		// https://github.com/containers/podman/issues/21681
+		runCmdDate := []string{"run", "-it", "--add-host=foobar123:host-gateway", imgName, "cat", "/etc/hosts"}
 		runCmdDateSession, err := mb.setCmd(runCmdDate).run()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(runCmdDateSession).To(Exit(0))
+		Expect(runCmdDateSession.outputToString()).To(ContainSubstring("foobar123"))
 
 		// Run container in background
 		runCmdTop := []string{"run", "-dt", imgName, "top"}
