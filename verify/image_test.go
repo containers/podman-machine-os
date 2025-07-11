@@ -151,6 +151,17 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(journalctlGvforwarderSession.outputToString()).To(ContainSubstring("waiting for packets..."))
 		})
 
+		It("no MOTD warnings logged", func() {
+			skipIfVmtype(WSLVirt, "wsl image does not have the FCOS modt messages")
+			// https://github.com/containers/podman-machine-os/issues/155
+			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName}).runWithStdin(strings.NewReader("id"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(0))
+			output := sshSession.outputToString()
+			Expect(output).To(ContainSubstring("Fedora CoreOS"), "should contain FCOS motd message")
+			Expect(output).ToNot(ContainSubstring("Warning"), "no warnings in motd message seen")
+		})
+
 		It("check systemd resolved is not in use", func() {
 			// https://github.com/containers/podman-machine-os/issues/18
 			// Note the service should not be installed as we removed the package at build time.

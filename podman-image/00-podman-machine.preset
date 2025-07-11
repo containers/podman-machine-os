@@ -1,0 +1,5 @@
+# For some reason unlike most other config files the first preset file wins here thus the 00 name.
+
+# Disable Root mountpoint warning on shh login
+# https://github.com/containers/podman-machine-os/issues/155
+disable coreos-warn-invalid-mounts.service

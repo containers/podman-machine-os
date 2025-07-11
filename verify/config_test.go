@@ -3,6 +3,7 @@ package verify
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"os"
 	"os/exec"
@@ -133,8 +134,12 @@ func (m *imageTestBuilder) setTimeout(timeout time.Duration) *imageTestBuilder {
 	return m
 }
 
+func (m *imageTestBuilder) runWithStdin(stdin io.Reader) (*machineSession, error) {
+	return runWrapper(podmanBinary, m.cmd, m.timeout, stdin)
+}
+
 func (m *imageTestBuilder) run() (*machineSession, error) {
-	return runWrapper(podmanBinary, m.cmd, m.timeout)
+	return runWrapper(podmanBinary, m.cmd, m.timeout, nil)
 }
 
 func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
@@ -148,12 +153,13 @@ func (m *imageTestBuilder) initNowWithName() (string, *machineSession, error) {
 	return machineName, session, err
 }
 
-func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration) (*machineSession, error) {
+func runWrapper(podmanBinary string, cmdArgs []string, timeout time.Duration, stdin io.Reader) (*machineSession, error) {
 	if len(os.Getenv("DEBUG")) > 0 {
 		cmdArgs = append([]string{"--log-level=debug"}, cmdArgs...)
 	}
 	GinkgoWriter.Println(podmanBinary + " " + strings.Join(cmdArgs, " "))
 	c := exec.Command(podmanBinary, cmdArgs...)
+	c.Stdin = stdin
 	session, err := Start(c, GinkgoWriter, GinkgoWriter)
 	if err != nil {
 		Fail(fmt.Sprintf("Unable to start session: %q", err))
