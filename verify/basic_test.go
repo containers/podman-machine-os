@@ -110,6 +110,15 @@ var _ = Describe("run basic podman commands", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(archSession).To(Exit(0))
 			Expect(archSession.outputToString()).To(Equal(expectedArch))
+
+			// check that argv[0] is preserved
+			argvTestCommand := []string{"run", "--quiet", "--platform", "linux/" + goArch, imgName, "sh", "-c", "echo $0"}
+			argvSession, err := mb.setCmd(argvTestCommand).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(argvSession).To(Exit(0))
+			// Equal is important as we need an exact match for "sh" which means the emulator preserved argv[0].
+			// Previously it would show the executable path "/bin/sh".
+			Expect(argvSession.outputToString()).To(Equal("sh"))
 		}
 
 		// Stop machine

@@ -118,4 +118,4 @@ dnf -y clean all
 
 systemctl enable rhsmcertd.service
 # Patching qemu backed binfmt configurations to use the actual executable's permissions and not the interpreter's
-for x in /usr/lib/binfmt.d/*.conf; do sed 's/\(:[^C:]*\)$/\1C/' "$x" | tee /etc/binfmt.d/"$(basename "$x")"; done
+for x in /usr/lib/binfmt.d/*.conf; do sed 's/\(:[^C:]*\)$/\1PC/' "$x" | tee /etc/binfmt.d/"$(basename "$x")"; done
