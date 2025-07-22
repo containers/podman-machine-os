@@ -98,5 +98,6 @@ jobs:
                 password: ${{secrets.ACTION_MAIL_PASSWORD}}
                 subject: Cirrus-CI build failures on ${{github.repository}}
                 to: "podman-monitor@lists.podman.io"
+                reply_to: "podman-monitor@lists.podman.io"
                 from: ${{secrets.ACTION_MAIL_SENDER}}
                 body: "podman-machine-os build failed on branch ${{ steps.retro.outputs.branch }}: https://cirrus-ci.com/build/${{ steps.retro.outputs.bid }}"
