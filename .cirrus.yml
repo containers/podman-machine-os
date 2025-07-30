@@ -227,10 +227,26 @@ publish_images_task:
             popd
 
             gh auth login --with-token <<<"$RELEASE_TOKEN"
+
+            if [[ $CIRRUS_TAG == *-rc* ]]; then
+                RC="--prerelease"
+            else
+                # check if this version should not be marked latest
+                prevvers=$(gh api repos/containers/podman-machine-os/releases/latest --jq '.tag_name')
+                echo "${prevvers},${CIRRUS_TAG}"
+                # sort -V -C returns 0 if args are ascending version order
+                if !(echo "${prevvers},${CIRRUS_TAG}" | tr ',' '\n' | sort -V -C)
+                then
+                    LATEST="--latest=false"
+                fi
+            fi
+
             gh release create $CIRRUS_TAG \
                 -t $CIRRUS_TAG \
                 --notes "$CIRRUS_TAG release images" \
                 --verify-tag \
+                $RC \
+                $LATEST \
                 $OUTDIR/*
             gh auth logout
         fi
