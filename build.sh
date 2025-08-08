@@ -25,7 +25,7 @@ mkdir -p ./rpms
 set +e
 if [[ ${PODMAN_PR_NUM} != "" ]]; then
     pushd ./rpms
-    for pkg in container-selinux crun;
+    for pkg in crun;
     do
         for tag in "${FEDORA_VERSION}"-updates-candidate "${FEDORA_VERSION}"-updates-testing "${FEDORA_VERSION}"-updates-testing-pending;
         do
