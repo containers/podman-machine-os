@@ -59,7 +59,7 @@ jobs:
                   printf "branch=%s\n" "$branch" >> $GITHUB_OUTPUT
 
             - if: steps.retro.outputs.is_pr == 'true' && steps.retro.outputs.status == 'COMPLETED'
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   persist-credentials: false
 
