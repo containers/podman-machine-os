@@ -52,5 +52,18 @@ FULL_IMAGE_NAME="${REPO}/${OCI_NAME}:${OCI_VERSION}"
 
 export FULL_IMAGE_NAME_ARCH="$FULL_IMAGE_NAME-${ARCH_TO_IMAGE_ARCH[$CPU_ARCH]}"
 
-FCOS_BASE_IMAGE="quay.io/fedora/fedora-coreos:stable"
+# For released images we want the stable stream but for early testing in CI let's use the next stream.
+FCOS_STREAM="${FCOS_STREAM:-stable}"
+if [[ -n "$CIRRUS_CI" ]]; then
+  if [[ -z "$CIRRUS_PR" ]]; then
+    DEST_BRANCH="$CIRRUS_BRANCH"
+  else
+    DEST_BRANCH="$CIRRUS_BASE_BRANCH"
+  fi
+  if [[ "$DEST_BRANCH" == "main" ]]; then
+    FCOS_STREAM="next"
+  fi
+fi
+
+FCOS_BASE_IMAGE="quay.io/fedora/fedora-coreos:$FCOS_STREAM"
 export FCOS_BASE_IMAGE
