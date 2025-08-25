@@ -105,6 +105,10 @@ PACKAGES=(
 
     # cpp for buildah.in support
     cpp
+
+    # qemu-guest-agent to enable communication from the host
+    qemu-guest-agent
+    checkpolicy
 )
 
 dnf install -y "${PACKAGES[@]}"
