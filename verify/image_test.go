@@ -160,6 +160,8 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			output := sshSession.outputToString()
 			Expect(output).To(ContainSubstring("Fedora CoreOS"), "should contain FCOS motd message")
 			Expect(output).ToNot(ContainSubstring("Warning"), "no warnings in motd message seen")
+			// no coreos-oci-migration-motd.service output should be seen
+			Expect(output).ToNot(ContainSubstring("zincati"), "no zincati migrate wanring in motd message seen")
 		})
 
 		It("check systemd resolved is not in use", func() {
