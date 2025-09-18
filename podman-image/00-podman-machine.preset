@@ -6,6 +6,7 @@ disable coreos-warn-invalid-mounts.service
 # We don't use zincati but because we ship our own custom builds so
 # we don't care about the coreos update migration to OCI images.
 disable coreos-oci-migration-motd.service
+disable coreos-container-signing-migration-motd.service
 
 # Disable coreos chrony config, we do provide our own.
 disable coreos-platform-chrony-config.service
