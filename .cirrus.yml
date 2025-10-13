@@ -26,7 +26,7 @@ env:
 
 gcp_credentials: ENCRYPTED[b06ef3490b73469d9da1402568d6f3e46a852955a4ab0807689d50352ecf2852cb5903e8d3b7603eaab9d1c7c7d851a5]
 
-aws_credentials: ENCRYPTED[b01991b35fe3f81eed974cf47b5541ed518eacfee4e430e9fb50fba31090f557ea86b0b79b5f5b4a712218206e0f3f58]
+aws_credentials: ENCRYPTED[0b983d10d6a427a58706be3af6aa481283c4aacfc132aa23790dcad7bd52e5f67fa2bbdf16d493695d7788300b86c1cd]
 
 # Default timeout
 timeout_in: 30m
