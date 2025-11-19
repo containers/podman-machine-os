@@ -7,8 +7,6 @@ ARG FEDORA_VERSION=${FEDORA_VERSION}
 RUN --mount=type=bind,source=/build_common.sh,target=/run/build_common.sh,z \
     /run/build_common.sh && ostree container commit
 
-COPY podman-iptables.conf /etc/modules-load.d/podman-iptables.conf
-
 # Work around for network-online.target issue https://github.com/containers/podman/issues/26134
 COPY podman-user-wait-network-online-override.conf /usr/lib/systemd/user/podman-user-wait-network-online.service.d/podman-user-wait-network-online-override.conf
 

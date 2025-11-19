@@ -181,15 +181,6 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(sshSession.outputToString()).To(Equal("inactive"))
 		})
 
-		It("iptables module should be loaded", func() {
-			skipIfVmtype(WSLVirt, "wsl kernel modules are statically defined in the kernel")
-			// https://github.com/containers/podman/issues/25153
-			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "sudo", "lsmod"}).run()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(sshSession).To(Exit(0))
-			Expect(sshSession.outputToString()).To(And(ContainSubstring("ip_tables"), ContainSubstring("ip6_tables")))
-		})
-
 		It("check podman coreos image version", func() {
 			skipIfVmtype(WSLVirt, "wsl does not use ostree updates")
 			// set by podman-rpm-info-vars.sh
