@@ -99,7 +99,6 @@ PACKAGES=(
     openssh-server
     cifs-utils
     nfs-utils-coreos
-    iptables-nft
     iproute
     dhcp-client
 
