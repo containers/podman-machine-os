@@ -91,7 +91,7 @@ pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images/custom-coreos-disk-ima
   --platforms applehv,hyperv,qemu \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
-  --imgref "ostree-remote-registry:fedora:$FULL_IMAGE_NAME" \
+  --imgref "ostree-unverified-image:$FULL_IMAGE_NAMEi-amd64" \
   --metal-image-size 6144 \
   --extra-kargs='ostree.prepare-root.composefs=0'
 
