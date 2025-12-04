@@ -211,7 +211,7 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(sshSession).To(Exit(0))
 			Expect(sshSession.outputToString()).
-				To(Equal("ostree-remote-image:fedora:docker://quay.io/podman/machine-os:" + imageVersion))
+				To(Equal("ostree-unverified-registry:quay.io/podman/machine-os:" + imageVersion))
 
 			// TODO: there is no 5.5 in the copr yet as podman main would need to be bumped.
 			// But in order to do that it needs working machine images, catch-22.

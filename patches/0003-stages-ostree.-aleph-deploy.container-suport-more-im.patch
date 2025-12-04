@@ -1,0 +1,58 @@
+From a14102ab3d2fbbe7577aa8888dc6a1d4222aeaf4 Mon Sep 17 00:00:00 2001
+From: Dusty Mabe <dusty@dustymabe.com>
+Date: Wed, 3 Dec 2025 22:25:53 -0500
+Subject: [PATCH 3/4] stages/ostree.{aleph,deploy.container}: suport more
+ imgref formats
+
+Let's add support for ostree-remote-image and ostree-unverified-image
+as defined in the rpm-ostree docs [1].
+
+[1] https://coreos.github.io/rpm-ostree/container/#url-format-for-ostree-native-containers
+---
+ stages/org.osbuild.ostree.aleph                      | 5 +++--
+ stages/org.osbuild.ostree.deploy.container.meta.json | 8 +++++---
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/stages/org.osbuild.ostree.aleph b/stages/org.osbuild.ostree.aleph
+index 9e21614f..af884aef 100755
+--- a/stages/org.osbuild.ostree.aleph
++++ b/stages/org.osbuild.ostree.aleph
+@@ -34,11 +34,12 @@ def aleph_container(tree, imgref):
+     imgref_list = imgref.split(':')
+     if imgref_list[0] in ["ostree-remote-registry", "ostree-remote-image"]:
+         img_name = ':'.join(imgref_list[2:])
+-    elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry"]:
++    elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry", "ostree-unverified-image"]:
+         img_name = ':'.join(imgref_list[1:])
+     else:
+         raise ValueError(f"Image ref {imgref} has unsupported type (supported: 'ostree-remote-registry', \
+-                         'ostree-remote-image', 'ostree-image-signed', or 'ostree-unverified-registry')")
++                         'ostree-remote-image', 'ostree-image-signed', 'ostree-unverified-registry', \
++                         or 'ostree-unverified-image'")
+ 
+     extra_args = []
+     extra_args.append(f"--repo={tree}/ostree/repo")
+diff --git a/stages/org.osbuild.ostree.deploy.container.meta.json b/stages/org.osbuild.ostree.deploy.container.meta.json
+index 73feeec0..418a1171 100644
+--- a/stages/org.osbuild.ostree.deploy.container.meta.json
++++ b/stages/org.osbuild.ostree.deploy.container.meta.json
+@@ -37,11 +37,13 @@
+         "target_imgref": {
+           "description": "imageref used as the source of truth for updates",
+           "type": "string",
+-          "pattern": "^(ostree-remote-registry|ostree-image-signed|ostree-unverified-registry):.*$",
++          "pattern": "^(ostree-remote-registry|ostree-remote-image|ostree-image-signed|ostree-unverified-registry|ostree-unverified-image):.*$",
+           "examples": [
+             "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable",
+-            "ostree-image-signed:quay.io/fedora/fedora-coreos:stable",
+-            "ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
++            "ostree-remote-image:fedora:docker://quay.io/fedora/fedora-coreos:stable",
++            "ostree-image-signed:docker://quay.io/fedora/fedora-coreos:stable",
++            "ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable",
++            "ostree-unverified-image:docker://quay.io/fedora/fedora-coreos:stable"
+           ]
+         },
+         "rootfs": {
+-- 
+2.51.1
+

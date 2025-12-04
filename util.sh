@@ -67,3 +67,30 @@ fi
 
 FCOS_BASE_IMAGE="quay.io/fedora/fedora-coreos:$FCOS_STREAM"
 export FCOS_BASE_IMAGE
+
+
+# Remove this when we no longer need to patch OSBuild
+patch_osbuild() {
+    # Add a few patches that either haven't made it into a release or
+    # that will be obsoleted with other work that will be done soon.
+    #
+    # To make it easier to apply patches we'll move around the osbuild
+    # code on the system first:
+    rmdir /usr/lib/osbuild/osbuild
+    python_lib_dir=$(ls -d /usr/lib/python*)
+    mv "${python_lib_dir}/site-packages/osbuild" /usr/lib/osbuild/
+    mkdir -p /usr/lib/osbuild/tools
+    mv /usr/bin/osbuild-mpp /usr/lib/osbuild/tools/
+    # Now all the software is under the /usr/lib/osbuild dir and we can patch
+    # shellcheck disable=SC2002
+    cat \
+        ./patches/0001-stages-ostree.aleph-don-t-add-docker-to-the-imgref-f.patch \
+        ./patches/0002-stages-ostree.deploy.container-rework-examples-into-.patch \
+        ./patches/0003-stages-ostree.-aleph-deploy.container-suport-more-im.patch \
+        ./patches/0004-stages-ostree.aleph-add-more-logic-for-querying-imag.patch \
+            | patch -d /usr/lib/osbuild -p1
+    # And then move the files back after patching
+    mv /usr/lib/osbuild/tools/osbuild-mpp /usr/bin/osbuild-mpp
+    mv /usr/lib/osbuild/osbuild "${python_lib_dir}/site-packages/osbuild"
+    mkdir -p /usr/lib/osbuild/osbuild
+}

@@ -1,0 +1,52 @@
+From e3247629c8af1c9fb75f4b1db27a23203aab694f Mon Sep 17 00:00:00 2001
+From: Dusty Mabe <dusty@dustymabe.com>
+Date: Tue, 2 Dec 2025 15:46:05 -0500
+Subject: [PATCH 1/4] stages/ostree.aleph: don't add docker:// to the imgref
+ for ref
+
+Today this isn't really doing what we want it to do. For example:
+
+```
+core@r5c:~$ cat /sysroot/ostree/deploy/fedora-coreos/deploy/*.origin
+[origin]
+container-image-reference=ostree-image-signed:docker://quay.io/fedora/fedora-coreos:stable
+
+core@r5c:~$ jq --raw-output .ref /sysroot/.aleph-version.json
+docker://ostree-image-signed:docker://quay.io/fedora/fedora-coreos:stable
+```
+
+OR
+
+```
+[core@cosa-devsh ~]$ cat /sysroot/ostree/deploy/fedora-coreos/deploy/*.origin
+[origin]
+container-image-reference=ostree-image-signed:oci-archive:/fedora-coreos-43.20251120.1.1-ostree.x86_64.ociarchive
+
+[core@cosa-devsh ~]$ jq --raw-output .ref /sysroot/.aleph-version.json
+docker://ostree-image-signed:oci-archive:/fedora-coreos-43.20251120.1.1-ostree.x86_64.ociarchive
+```
+
+Which is clearly wrong.
+
+I doubt this `ref` value is even used for anything anymore, but let's
+just use the verbatim imgref here so the value isn't clearly wrong.
+---
+ stages/org.osbuild.ostree.aleph | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/stages/org.osbuild.ostree.aleph b/stages/org.osbuild.ostree.aleph
+index 4a8e2c8e..9e21614f 100755
+--- a/stages/org.osbuild.ostree.aleph
++++ b/stages/org.osbuild.ostree.aleph
+@@ -52,7 +52,7 @@ def aleph_container(tree, imgref):
+     container_data_config = json.loads(container_data_config_json)
+ 
+     aleph_digest = container_data['config']['digest']
+-    aleph_ref = f"docker://{imgref}"
++    aleph_ref = imgref
+     aleph_version = container_data_config['config']['Labels']['org.opencontainers.image.version']
+     aleph_container_image = container_data_config['config']['Labels']
+ 
+-- 
+2.51.1
+

@@ -1,0 +1,29 @@
+From f3c9fdfb8d3351ad059938fed691713e72236ac8 Mon Sep 17 00:00:00 2001
+From: Dusty Mabe <dusty@dustymabe.com>
+Date: Wed, 3 Dec 2025 15:26:08 -0500
+Subject: [PATCH 2/4] stages/ostree.deploy.container: rework examples into
+ proper list
+
+This is just a cosmetic change.
+---
+ stages/org.osbuild.ostree.deploy.container.meta.json | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/stages/org.osbuild.ostree.deploy.container.meta.json b/stages/org.osbuild.ostree.deploy.container.meta.json
+index 99239a80..73feeec0 100644
+--- a/stages/org.osbuild.ostree.deploy.container.meta.json
++++ b/stages/org.osbuild.ostree.deploy.container.meta.json
+@@ -39,7 +39,9 @@
+           "type": "string",
+           "pattern": "^(ostree-remote-registry|ostree-image-signed|ostree-unverified-registry):.*$",
+           "examples": [
+-            "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable, ostree-image-signed:quay.io/fedora/fedora-coreos:stable, ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
++            "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable",
++            "ostree-image-signed:quay.io/fedora/fedora-coreos:stable",
++            "ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
+           ]
+         },
+         "rootfs": {
+-- 
+2.51.1
+
