@@ -6,6 +6,10 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
+echo "Patching OSBuild"
+dnf install -y --quiet patch
+patch_osbuild
+
 echo " Building image locally"
 
 # Validate PODMAN_PR_NUM var, see the Containerfile for the pull logic.
