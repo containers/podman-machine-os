@@ -14,6 +14,11 @@ echo "| --- | --- |"
 
 for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst wsl.tar.zst tar; do
     for arch in x86_64 aarch64; do
+        # applehv is only supported on aarch64 (Apple Silicon Macs)
+        if [[ "$end" == "applehv.raw.zst" && "$arch" == "x86_64" ]]; then
+            echo -n "| N/A "
+            continue
+        fi
         name="podman-machine.$arch.$end"
         echo -n "| [$name](https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/image_build/image/$name) "
     done

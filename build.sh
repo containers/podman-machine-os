@@ -87,8 +87,14 @@ echo "Saving image from image store to filesystem"
 podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
 
 echo "Transforming OCI image into disk image"
+# applehv is only supported on aarch64 (Apple Silicon Macs)
+if [[ "$CPU_ARCH" == "aarch64" ]]; then
+  PLATFORMS="applehv,hyperv,qemu"
+else
+  PLATFORMS="hyperv,qemu"
+fi
 pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images/custom-coreos-disk-images.sh \
-  --platforms applehv,hyperv,qemu \
+  --platforms "$PLATFORMS" \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
   --imgref "ostree-remote-registry:fedora:$FULL_IMAGE_NAME" \
@@ -105,6 +111,11 @@ declare -A COREOS_PLATFORM_SUFFIX=(
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
 for hypervisor in "${!COREOS_PLATFORM_SUFFIX[@]}"; do
+  # applehv is only supported on aarch64 (Apple Silicon Macs)
+  if [[ "$hypervisor" == "applehv" && "$CPU_ARCH" != "aarch64" ]]; then
+    continue
+  fi
+
   # Rename the file to our preferred format
   extension="${COREOS_PLATFORM_SUFFIX[$hypervisor]}"
   filename="${DISK_IMAGE_NAME}-${hypervisor}.${CPU_ARCH}.${extension}"
