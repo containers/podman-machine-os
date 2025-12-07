@@ -8,6 +8,20 @@ declare -A ARCH_TO_IMAGE_ARCH=(
     ["aarch64"]="arm64"
 )
 
+# Map architectures to their supported disk image platforms
+# Note: WSL is built separately (not via custom-coreos-disk-images)
+# applehv is only supported on Apple Silicon Macs (aarch64)
+declare -A ARCH_TO_PLATFORMS=(
+    ["x86_64"]="hyperv qemu wsl"
+    ["aarch64"]="applehv hyperv qemu wsl"
+)
+
+# Platforms that are built via custom-coreos-disk-images (excludes WSL)
+declare -A ARCH_TO_COREOS_PLATFORMS=(
+    ["x86_64"]="hyperv qemu"
+    ["aarch64"]="applehv hyperv qemu"
+)
+
 
 disk_format_from_flavor () {
   if [[ -z $1 ]]; then
@@ -33,6 +47,39 @@ disk_format_from_flavor () {
       exit 1
       ;;
   esac
+}
+
+# Convert platform name to compressed artifact extension (e.g., "applehv" -> "applehv.raw.zst")
+platform_to_artifact_ext () {
+  local platform=$1
+  if [[ -z $platform ]]; then
+    echo "no platform passed"
+    return 1
+  fi
+
+  local format=$(disk_format_from_flavor "$platform")
+  echo "${platform}.${format}.zst"
+}
+
+# Get artifact extensions for a given architecture (space-separated)
+# Also includes the uncompressed "tar" artifact
+get_artifact_extensions_for_arch () {
+  local arch=$1
+  if [[ -z $arch ]]; then
+    echo "no architecture passed" >&2
+    return 1
+  fi
+
+  local platforms="${ARCH_TO_PLATFORMS[$arch]}"
+  local result=""
+
+  for platform in $platforms; do
+    result="$result $(platform_to_artifact_ext "$platform")"
+  done
+
+  result="$result $arch.tar"
+
+  echo "$result" | xargs  # trim whitespace
 }
 
 
