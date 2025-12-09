@@ -6,6 +6,10 @@ source ./util.sh
 
 echo "Preparing to build ${FULL_IMAGE_NAME}"
 
+echo "Patching OSBuild"
+dnf install -y --quiet patch
+patch_osbuild
+
 echo " Building image locally"
 
 # Validate PODMAN_PR_NUM var, see the Containerfile for the pull logic.
@@ -80,18 +84,17 @@ podman build -t "${FULL_IMAGE_NAME_ARCH}" -v "$PWD"/rpms:/var/tmp/rpms \
     --build-arg PODMAN_PR_NUM="${PODMAN_PR_NUM}"
 
 # Use rpm-ostree rechunk to remove unwanted data/packages and save space where can
-rpm-ostree compose build-chunked-oci --bootc --from "${FULL_IMAGE_NAME_ARCH}" --output containers-storage:"${FULL_IMAGE_NAME_ARCH}"
-
-echo "Saving image from image store to filesystem"
-
-podman save --format oci-archive -o "${OUTDIR}/${DISK_IMAGE_NAME}" "${FULL_IMAGE_NAME_ARCH}"
+echo "Re-Chunking to make incremental upgrades more efficient"
+rpm-ostree compose build-chunked-oci \
+        --bootc --from "${FULL_IMAGE_NAME_ARCH}" \
+        --output "oci-archive:${OUTDIR}/${DISK_IMAGE_NAME}"
 
 echo "Transforming OCI image into disk image"
 pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images/custom-coreos-disk-images.sh \
   --platforms applehv,hyperv,qemu \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
-  --imgref "ostree-remote-registry:fedora:$FULL_IMAGE_NAME" \
+  --imgref "ostree-unverified-registry:$FULL_IMAGE_NAME" \
   --metal-image-size 6144 \
   --extra-kargs='ostree.prepare-root.composefs=0'
 
