@@ -16,8 +16,12 @@ buildah manifest create $cirrusBuildIdAnnoation "${FULL_IMAGE_NAME}"
 
 # Load and add OCI image to manifest
 for arch in "${!ARCH_TO_IMAGE_ARCH[@]}"; do
-  podman load -i "${OUTDIR}/${DISK_IMAGE_NAME}.${arch}.tar"
-  buildah manifest add --arch ${ARCH_TO_IMAGE_ARCH[$arch]} "${FULL_IMAGE_NAME}" "$FULL_IMAGE_NAME-${ARCH_TO_IMAGE_ARCH[$arch]}"
+  output=$(podman load -i "${OUTDIR}/${DISK_IMAGE_NAME}.${arch}.tar")
+  # Trim "Loaded image: " prefix
+  id="${output#Loaded image: }"
+  image_name="$FULL_IMAGE_NAME-${ARCH_TO_IMAGE_ARCH[$arch]}"
+  podman tag "$id" "$image_name"
+  buildah manifest add --arch ${ARCH_TO_IMAGE_ARCH[$arch]} "${FULL_IMAGE_NAME}" "$image_name"
 done
 
 
