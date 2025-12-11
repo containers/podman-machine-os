@@ -198,9 +198,12 @@ publish_images_task:
         RELEASE_TOKEN: ENCRYPTED[51eebe3e4119c3c51078be7827458df1e63c882851484f95bc0624a0d4ddbed48163debc1afb33711d268d9b444eaa3a]
         LABEL_TOKEN: ENCRYPTED[4095757ab03fa845ea08ab99cb8fe3a560e65de22204fbac07043d076d2f498ab5fedd0491659d8f3baef2c831b482aa]
     push_script: |
+        source ./util.sh
         mkdir $OUTDIR
-        for end in applehv.raw.zst hyperv.vhdx.zst qemu.qcow2.zst wsl.tar.zst tar; do
-            for arch in x86_64 aarch64; do
+        for arch in x86_64 aarch64; do
+            # Get artifact extensions for this architecture
+            artifact_exts=$(get_artifact_extensions_for_arch "$arch")
+            for end in $artifact_exts; do
                 name="podman-machine.$arch.$end"
                 curl --retry 5 --retry-delay 8 --fail --location -O --output-dir $OUTDIR --url "${MACHINE_IMAGE_BASE_URL}$name"
             done

@@ -90,8 +90,11 @@ rpm-ostree compose build-chunked-oci \
         --output "oci-archive:${OUTDIR}/${DISK_IMAGE_NAME}"
 
 echo "Transforming OCI image into disk image"
+# Get supported CoreOS platforms for this architecture and convert space-separated to comma-separated
+# (WSL is built separately and not included here)
+PLATFORMS="${ARCH_TO_COREOS_PLATFORMS[$CPU_ARCH]// /,}"
 pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images/custom-coreos-disk-images.sh \
-  --platforms applehv,hyperv,qemu \
+  --platforms "$PLATFORMS" \
   --ociarchive "${PWD}/${DISK_IMAGE_NAME}" \
   --osname fedora-coreos \
   --imgref "ostree-unverified-registry:$FULL_IMAGE_NAME" \
@@ -107,7 +110,8 @@ declare -A COREOS_PLATFORM_SUFFIX=(
 
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
-for hypervisor in "${!COREOS_PLATFORM_SUFFIX[@]}"; do
+# Only process CoreOS platforms supported by this architecture (WSL is already compressed)
+for hypervisor in ${ARCH_TO_COREOS_PLATFORMS[$CPU_ARCH]}; do
   # Rename the file to our preferred format
   extension="${COREOS_PLATFORM_SUFFIX[$hypervisor]}"
   filename="${DISK_IMAGE_NAME}-${hypervisor}.${CPU_ARCH}.${extension}"
