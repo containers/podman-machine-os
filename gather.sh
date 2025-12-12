@@ -15,21 +15,20 @@ fi
 buildah manifest create $cirrusBuildIdAnnoation "${FULL_IMAGE_NAME}"
 
 # Load and add OCI image to manifest
-for arch in "${!ARCH_TO_IMAGE_ARCH[@]}"; do
-  output=$(podman load -i "${OUTDIR}/${DISK_IMAGE_NAME}.${arch}.tar")
+for name in $(get_oci_artifact_names); do
+  output=$(podman load -i "${OUTDIR}/$name")
+  arch="${ARCH_TO_IMAGE_ARCH[$(get_arch_from_name $name)]}"
   # Trim "Loaded image: " prefix
   id="${output#Loaded image: }"
-  image_name="$FULL_IMAGE_NAME-${ARCH_TO_IMAGE_ARCH[$arch]}"
+  image_name="$FULL_IMAGE_NAME-$arch"
   podman tag "$id" "$image_name"
-  buildah manifest add --arch ${ARCH_TO_IMAGE_ARCH[$arch]} "${FULL_IMAGE_NAME}" "$image_name"
+  buildah manifest add --arch $arch "${FULL_IMAGE_NAME}" "$image_name"
 done
 
 
 # Adds the OCI artifacts to the manifest
-for itype in "${DISK_FLAVORS[@]}"; do
-  for arch in "${!ARCH_TO_IMAGE_ARCH[@]}"; do
-    DISK_FORMAT=$(disk_format_from_flavor "${itype}")
-    COMPRESSED_DISK="${OUTDIR}/${DISK_IMAGE_NAME}.${arch}.${itype}.${DISK_FORMAT}.zst"
-	  buildah manifest add --artifact --artifact-type=""  --os=linux --arch=$arch --annotation "disktype=${itype}" "${FULL_IMAGE_NAME}" "$COMPRESSED_DISK"
-  done
+for name in $(get_disk_artifact_names); do
+    disk_type="$(get_disk_type_from_name $name)"
+    arch="$(get_arch_from_name $name)"
+    buildah manifest add --artifact --artifact-type=""  --os=linux --arch=$arch --annotation "disktype=${disk_type}" "${FULL_IMAGE_NAME}" "${OUTDIR}/$name"
 done

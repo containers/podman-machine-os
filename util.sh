@@ -3,6 +3,8 @@
 source ./podman-rpm-info-vars.sh
 
 CPU_ARCH=$(uname -m)
+export DISK_IMAGE_NAME="podman-machine"
+
 declare -A ARCH_TO_IMAGE_ARCH=(
     ["x86_64"]="amd64"
     ["aarch64"]="arm64"
@@ -22,74 +24,50 @@ declare -A ARCH_TO_COREOS_PLATFORMS=(
     ["aarch64"]="applehv hyperv qemu"
 )
 
+declare -A PLATFORM_TO_DISKTYPE=(
+    ["applehv"]="raw"
+    ["hyperv"]="vhdx"
+    ["qemu"]="qcow2"
+    ["wsl"]="tar"
+)
 
-disk_format_from_flavor () {
-  if [[ -z $1 ]]; then
-    echo "no disk flavor passed"
-    exit
-  fi
-
-  case $1 in
-    "applehv")
-      echo "raw"
-      ;;
-    "hyperv")
-      echo "vhdx"
-      ;;
-    "qemu")
-      echo "qcow2"
-      ;;
-    "wsl")
-      echo "tar"
-      ;;
-    *)
-      echo "unknown flavor $1"
-      exit 1
-      ;;
-  esac
-}
-
-# Convert platform name to compressed artifact extension (e.g., "applehv" -> "applehv.raw.zst")
-platform_to_artifact_ext () {
-  local platform=$1
-  if [[ -z $platform ]]; then
-    echo "no platform passed"
-    return 1
-  fi
-
-  local format=$(disk_format_from_flavor "$platform")
-  echo "${platform}.${format}.zst"
-}
-
-# Get artifact extensions for a given architecture (space-separated)
-# Also includes the uncompressed "tar" artifact
-get_artifact_extensions_for_arch () {
-  local arch=$1
-  if [[ -z $arch ]]; then
-    echo "no architecture passed" >&2
-    return 1
-  fi
-
-  local platforms="${ARCH_TO_PLATFORMS[$arch]}"
-  local result=""
-
-  for platform in $platforms; do
-    result="$result $(platform_to_artifact_ext "$platform")"
+get_disk_artifact_names() {
+  for arch in "${!ARCH_TO_PLATFORMS[@]}"; do
+    for platform in ${ARCH_TO_PLATFORMS[$arch]}; do
+      echo "$DISK_IMAGE_NAME.$arch.$platform.${PLATFORM_TO_DISKTYPE[$platform]}.zst"
+    done
   done
-
-  result="$result $arch.tar"
-
-  echo "$result" | xargs  # trim whitespace
 }
 
+get_oci_artifact_names() {
+  for arch in "${!ARCH_TO_PLATFORMS[@]}"; do
+    echo "$DISK_IMAGE_NAME.$arch.tar"
+  done
+}
 
-DISK_FLAVORS=("applehv" "hyperv" "qemu" "wsl")
+get_all_artifact_names() {
+  get_disk_artifact_names
+  get_oci_artifact_names
+}
+
+_get_part_from_name() {
+  local array
+  IFS='.' read -r -a array <<< "$1"
+  echo "${array[$2]}"
+}
+
+get_arch_from_name() {
+  _get_part_from_name "$1" 1
+}
+
+get_disk_type_from_name() {
+  _get_part_from_name "$1" 2
+}
 
 # OUTDIR needs to be run in TMT test as a non-root user after initial root
 # login
 export SRCDIR="${TMT_TREE:-${CIRRUS_WORKING_DIR:-..}}"
 export OUTDIR="${OUTDIR:-${TMT_TEST_DATA:-$(git rev-parse --show-toplevel)/outdir}}"
-export DISK_IMAGE_NAME="podman-machine"
 
 REPO="${REPO:-quay.io/podman}"
 OCI_NAME="machine-os"
