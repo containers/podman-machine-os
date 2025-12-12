@@ -101,19 +101,12 @@ pushd "$OUTDIR" && sh "$SRCDIR"/custom-coreos-disk-images/custom-coreos-disk-ima
   --metal-image-size 6144 \
   --extra-kargs='ostree.prepare-root.composefs=0'
 
-
-declare -A COREOS_PLATFORM_SUFFIX=(
-    ['applehv']='raw'
-    ['hyperv']='vhdx'
-    ['qemu']='qcow2'
-)
-
 echo "Compressing disk images with zstd"
 # note: we are still "in" the outdir at this point
 # Only process CoreOS platforms supported by this architecture (WSL is already compressed)
 for hypervisor in ${ARCH_TO_COREOS_PLATFORMS[$CPU_ARCH]}; do
   # Rename the file to our preferred format
-  extension="${COREOS_PLATFORM_SUFFIX[$hypervisor]}"
+  extension="${PLATFORM_TO_DISKTYPE[$hypervisor]}"
   filename="${DISK_IMAGE_NAME}-${hypervisor}.${CPU_ARCH}.${extension}"
   newfilename="${DISK_IMAGE_NAME}.${CPU_ARCH}.${hypervisor}.${extension}"
   mv "$filename" "$newfilename"
