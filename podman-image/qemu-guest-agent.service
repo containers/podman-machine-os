@@ -1,0 +1,11 @@
+Description=QEMU Guest Agent
+IgnoreOnIsolate=True
+
+[Service]
+UMask=0077
+ExecStart=/usr/bin/qemu-ga --method=vsock-listen --path=3:1025 # Todo: The 3 may need to be dynamic
+Restart=always
+RestartSec=0
+
+[Install]
+WantedBy=default.target
