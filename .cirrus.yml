@@ -22,7 +22,7 @@ env:
     # Vars used for the macos and windows testing
     MACHINE_IMAGE_BASE_URL: "https://api.cirrus-ci.com/v1/artifact/build/${CIRRUS_BUILD_ID}/image_build/image/"
     # podman version used by windows/macos verify suite
-    PODMAN_INSTALL_VERSION: 5.6.1
+    PODMAN_INSTALL_VERSION: 5.7.1
 
 gcp_credentials: ENCRYPTED[b06ef3490b73469d9da1402568d6f3e46a852955a4ab0807689d50352ecf2852cb5903e8d3b7603eaab9d1c7c7d851a5]
 
@@ -108,7 +108,6 @@ verify_windows_task:
         ARCH: "x86_64"
         CIRRUS_WORKING_DIR: "${LOCALAPPDATA}\\cirrus-ci-build"
         CIRRUS_SHELL: powershell
-        PATH: "${PATH};C:\\Program Files\\RedHat\\Podman"
         MACHINE_IMAGE: "podman-machine.${ARCH}.${PROVIDER}.${FILETYPE}.zst"
     matrix:
         - env:
