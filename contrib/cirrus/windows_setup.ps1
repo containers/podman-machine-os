@@ -25,24 +25,26 @@ function download($uri, $file) {
 download "${ENV:MACHINE_IMAGE_BASE_URL}${ENV:MACHINE_IMAGE}" "${ENV:MACHINE_IMAGE}"
 
 # Download and install podman
-$uri = "https://github.com/containers/podman/releases/download/v${ENV:PODMAN_INSTALL_VERSION}/podman-installer-windows-amd64.exe"
-$installer = "podman-setup.exe"
+$uri = "https://github.com/containers/podman/releases/download/v${ENV:PODMAN_INSTALL_VERSION}/podman-installer-windows-amd64.msi"
+$installer = "podman-installer.msi"
 download "$uri" "$installer"
 
 Write-Host "Installing podman..."
 $ret = Start-Process -Wait `
-                        -PassThru "$installer" `
-                        -ArgumentList "/install /quiet `
-                            MachineProvider=hyperv `
-                            WSLCheckbox=0 `
-                            HyperVCheckbox=0 `
-                            /log podman-setup.log"
+    -PassThru 'msiexec' `
+    -ArgumentList "/package $installer /quiet /l*v podman-setup.log MACHINE_PROVIDER=${ENV:PROVIDER}"
+
 if ($ret.ExitCode -ne 0) {
     Write-Host "Install failed, dumping log"
     Get-Content podman-setup.log
     throw "Exit code is $($ret.ExitCode)"
 }
 Write-Host "Installation completed successfully!`n"
+
+Write-Host "Updating PATH environment variable to include Podman's bin directory`n"
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") +
+            ";" +
+            [System.Environment]::GetEnvironmentVariable("Path", "User")
 
 Write-Host "Podman version"
 podman.exe --version
