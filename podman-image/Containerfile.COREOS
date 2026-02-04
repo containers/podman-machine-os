@@ -40,3 +40,16 @@ RUN --network=none rm -vf /etc/resolv.conf && rpm -e systemd-resolved
 # https://github.com/containers/podman/pull/21670#discussion_r1585790802
 COPY rosetta-activation.service /etc/systemd/system/rosetta-activation.service
 COPY rosetta-activation.sh /usr/local/bin/rosetta-activation.sh
+
+# Configure qemu-guest-agent
+# Copy in our service file override that communicates over vsock
+COPY qemu-guest-agent.service /etc/systemd/system/qemu-guest-agent.service
+# Bind mount non-base selinux policy module compile it and install it to allow
+# qemu-guest-agent access to the vsock-socket
+RUN --mount=type=bind,source=/qemuga-vsock.te,target=/run/qemuga-vsock.te,z <<EOF
+/usr/bin/checkmodule -M -m -o /run/qemuga-vsock.mod /run/qemuga-vsock.te
+/usr/bin/semodule_package -o /run/qemuga-vsock.pp -m /run/qemuga-vsock.mod
+sudo semodule -i /run/qemuga-vsock.pp
+rm /run/qemuga-vsock.pp /run/qemuga-vsock.mod
+systemctl enable qemu-guest-agent.service
+EOF
