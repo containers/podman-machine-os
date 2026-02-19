@@ -42,6 +42,7 @@ image_build_task:
         type: "${EC2_INST_TYPE}"
         region: us-east-1
         architecture: "${GO_ARCH}"
+        spot: true
     env:
         HOME: /root
     matrix:
@@ -77,6 +78,7 @@ verify_linux_task:
         type: "${EC2_INST_TYPE}"
         region: us-east-1
         architecture: "${GO_ARCH}"
+        spot: true
     env:
         HOME: /root
         MACHINE_IMAGE: "podman-machine.${ARCH}.qemu.qcow2.zst"
@@ -107,6 +109,7 @@ verify_windows_task:
         type: m5zn.metal
         region: us-east-1
         platform: windows
+        spot: true
     env:
         ARCH: "x86_64"
         CIRRUS_WORKING_DIR: "${LOCALAPPDATA}\\cirrus-ci-build"
@@ -191,6 +194,7 @@ publish_images_task:
         image: "${VM_IMAGE}"
         type: "${EC2_INST_TYPE}"
         region: us-east-1
+        spot: true
     env:
         HOME: /root
         VM_IMAGE: "${FEDORA_AMI}"
