@@ -107,6 +107,9 @@ PACKAGES=(
 
     # git-core for Containerfile `ADD <gitrepo>` clone feature
     git-core
+
+    # Guest agent (vsock) for time sync and host-guest features (macOS vfkit/libkrun, Linux qemu)
+    qemu-guest-agent
 )
 
 dnf install -y "${PACKAGES[@]}"

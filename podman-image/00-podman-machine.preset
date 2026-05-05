@@ -10,3 +10,6 @@ disable coreos-container-signing-migration-motd.service
 
 # Disable coreos chrony config, we do provide our own.
 disable coreos-platform-chrony-config.service
+
+# qemu-guest-agent (vsock) for macOS (vfkit, libkrun) and Linux (qemu); gated by systemd conditions.
+enable qemu-guest-agent.service
