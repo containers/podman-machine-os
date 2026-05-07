@@ -189,6 +189,13 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(sshSession.outputToString()).To(And(ContainSubstring("ip_tables"), ContainSubstring("ip6_tables")))
 		})
 
+		It("verify custom podman config settings", func() {
+			sshSession, err := mb.setCmd([]string{"machine", "ssh", machineName, "cat", "/usr/share/containers/registries.conf.d/999-podman-machine.conf", "/usr/share/containers/containers.conf.d/999-podman-machine.conf"}).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sshSession).To(Exit(0))
+			Expect(sshSession.outputToString()).To(And(ContainSubstring("unqualified-search-registries"), ContainSubstring("helper_binaries_dir")))
+		})
+
 		It("check podman coreos image version", func() {
 			skipIfVmtype(WSLVirt, "wsl does not use ostree updates")
 			// set by podman-rpm-info-vars.sh
