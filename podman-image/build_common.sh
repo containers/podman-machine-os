@@ -1,14 +1,14 @@
 #!/bin/bash
 set -eo pipefail
 
-mkdir -p /etc/containers/registries.conf.d \
-         /etc/systemd/system.conf.d \
+mkdir -p /etc/systemd/system.conf.d \
          /etc/environment.d \
-         /etc/containers/registries.conf.d \
          /etc/ssh/sshd_config.d \
          /etc/sysctl.d \
          /etc/chrony.d \
-         /etc/systemd/system/user@.service.d
+         /etc/systemd/system/user@.service.d \
+         /usr/share/containers/containers.conf.d \
+         /usr/share/containers/registries.conf.d
 
 # Install config files
 
@@ -22,7 +22,7 @@ cat >/etc/profile.d/docker-host.sh <<'EOF'
 export DOCKER_HOST="unix://$(podman info -f "{{.Host.RemoteSocket.Path}}")"
 EOF
 
-cat >/etc/containers/registries.conf.d/999-podman-machine.conf <<EOF
+cat >/usr/share/containers/registries.conf.d/999-podman-machine.conf <<EOF
 # Issue #11489: make sure that we can inject a custom registries.conf
 # file on the system level to force a single search registry.
 # The remote client does not yet support prompting for short-name
@@ -30,6 +30,20 @@ cat >/etc/containers/registries.conf.d/999-podman-machine.conf <<EOF
 # as a workaround.
 
 unqualified-search-registries=["docker.io"]
+EOF
+
+cat >/usr/share/containers/containers.conf.d/999-podman-machine.conf <<EOF
+# Starting with Podman 6 we mount the host configs into the VM at /etc/containers, see
+# https://github.com/containers/podman/pull/28573
+#
+# The problem with that is that helper_binaries_dir has two purposes, finding client
+# binaries (i.e. gvproxy) but also the server ones (i.e. netavark). If a user sets this
+# to a client path they could unset the server default and thus make podman inside the
+# VM more or less unusable.
+# To fix this lets always append the fedora package path last here.
+
+[engine]
+helper_binaries_dir=["/usr/libexec/podman", {append=true}]
 EOF
 
 cat >/etc/sysctl.d/10-inotify-instances.conf <<EOF
