@@ -118,6 +118,34 @@ var _ = Describe("run image tests", Ordered, ContinueOnFailure, func() {
 			Expect(rosettaSession).To(Exit(0))
 			Expect(rosettaSession.outputToString()).To(Equal("active"))
 		})
+		It("should ship qemu-guest-agent for vsock (FCOS images)", func() {
+			skipIfVmtype(WSLVirt, "WSL image does not use the CoreOS Containerfile customizations")
+			rpmCmd := []string{"machine", "ssh", machineName, "rpm", "-q", "qemu-guest-agent"}
+			rpmSession, err := mb.setCmd(rpmCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rpmSession).To(Exit(0))
+			Expect(rpmSession.outputToString()).To(ContainSubstring("qemu-guest-agent"))
+
+			catCmd := []string{"machine", "ssh", machineName, "systemctl", "cat", "qemu-guest-agent.service"}
+			catSession, err := mb.setCmd(catCmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(catSession).To(Exit(0))
+			out := catSession.outputToString()
+			Expect(out).To(ContainSubstring("vsock-listen"))
+			Expect(out).To(ContainSubstring("--path=3:1234"))
+		})
+		It("should have qemu-guest-agent active on Linux and macOS providers", func() {
+			skipIfVmtype(WSLVirt, "WSL image does not include qemu-guest-agent")
+			skipIfVmtype(HyperVVirt, "HyperV does not expose a vsock channel for qemu-guest-agent")
+			cmd := []string{"machine", "ssh", machineName, "systemctl", "-P", "ActiveState", "show", "qemu-guest-agent.service"}
+			session, err := mb.setCmd(cmd).run()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session).To(Exit(0))
+			// "active" when the host exposes the vsock channel, "activating" when
+			// qemu-ga is in a restart loop because the host side is not yet wired up.
+			// Both confirm that the systemd conditions matched and the service was started.
+			Expect(session.outputToString()).To(Or(Equal("active"), Equal("activating")))
+		})
 		It("should have zero critical error messages journalctl", func() {
 			skipIfVmtype(LibKrun, "TODO: analyze the error messages in journalctl when using libkrun")
 			skipIfVmtype(AppleHvVirt, "TODO: analyze the error messages in journalctl when using applehv")

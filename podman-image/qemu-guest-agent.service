@@ -1,0 +1,15 @@
+[Unit]
+Description=QEMU Guest Agent
+IgnoreOnIsolate=true
+ConditionVirtualization=|kvm
+ConditionVirtualization=|apple
+ConditionFirmware=|smbios-field(sys_vendor = Libkrun)
+
+[Service]
+UMask=0077
+ExecStart=/usr/bin/qemu-ga --method=vsock-listen --path=3:1234
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

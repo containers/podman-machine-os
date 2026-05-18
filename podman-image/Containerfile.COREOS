@@ -1,4 +1,13 @@
 ARG FCOS_BASE_IMAGE=${FCOS_BASE_IMAGE}
+
+# Compile SELinux in a throwaway stage using the same base as the final image so policy module
+# format matches (fedora:latest can emit a newer policydb than FCOS semodule accepts).
+FROM ${FCOS_BASE_IMAGE} AS qemu_guest_agent_vsock_selinux
+COPY qemu_guest_agent_vsock.te /qemu_guest_agent_vsock.te
+RUN dnf install -y checkpolicy policycoreutils && dnf clean all && \
+    checkmodule -M -m -o /qemu_guest_agent_vsock.mod /qemu_guest_agent_vsock.te && \
+    semodule_package -o /qemu_guest_agent_vsock.pp -m /qemu_guest_agent_vsock.mod
+
 FROM ${FCOS_BASE_IMAGE}
 
 ARG PODMAN_PR_NUM=${PODMAN_PR_NUM}
@@ -45,3 +54,8 @@ RUN --network=none rm -vf /etc/resolv.conf && rpm -e systemd-resolved
 # https://github.com/containers/podman/pull/21670#discussion_r1585790802
 COPY rosetta-activation.service /etc/systemd/system/rosetta-activation.service
 COPY rosetta-activation.sh /usr/local/bin/rosetta-activation.sh
+
+# qemu-guest-agent over vsock
+COPY --from=qemu_guest_agent_vsock_selinux /qemu_guest_agent_vsock.pp /tmp/qemu_guest_agent_vsock.pp
+RUN semodule -i /tmp/qemu_guest_agent_vsock.pp && rm -f /tmp/qemu_guest_agent_vsock.pp
+COPY qemu-guest-agent.service /etc/systemd/system/qemu-guest-agent.service
